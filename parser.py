@@ -29,9 +29,10 @@ def parse(args):
       action = parsed_problem.get_action(action_name)
       print("  parameters: ", action.parameters[0], action.parameters[0].sort.name)
       print("  parameter types:")
-      # TODO: need to able to specify parameter for each predicate inside conditions:
       for parameter in action.parameters:
         print("    ",parameter, parameter.sort.name)
+      # This gives the parameter symbol:
+      # print(action.precondition.subformulas[0].subterms[0].symbol)
       print("  preconditions: ", action.precondition)
       print("  effects: ", action.effects)
     print("#------------------------------------\n")
