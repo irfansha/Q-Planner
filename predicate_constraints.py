@@ -15,3 +15,7 @@ class PredicateConstraints:
     '\n  negative_preconditions: ' + str(self.neg_pre) + \
     '\n  positive_effects: ' + str(self.pos_eff) + \
     '\n  negative_effects: ' + str(self.neg_eff) + '\n'
+
+  def add_prepos_constraint(self, action_name, predicate_parameters):
+    # action name and predicate parameters are added as a tuple:
+    self.pos_pre.append((action_name, predicate_parameters))
