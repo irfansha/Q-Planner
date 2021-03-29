@@ -16,6 +16,9 @@ class Parse:
     self.valid_types = []
     self.valid_actions = []
 
+    # WARNING: Possible problem here,
+    # since we are trimming down some types and actions
+    # debugging to be done here in case something goes wrong:
     self.generate_valid_types()
     self.generate_valid_actions()
 
@@ -52,13 +55,11 @@ class Parse:
         print("  Objects of type " + (tp.name) , list(self.lang.get(tp.name).domain()))
 
 
-  # Ignoring types with 0 or all objects:
+  # Ignoring types with 0 objects:
   def generate_valid_types(self):
-    num_objects = len(self.lang.constants())
     for typ in self.lang.sorts:
       cur_num_objects = len(list(self.lang.get(typ.name).domain()))
-      assert( 0 <= cur_num_objects <= num_objects)
-      if (cur_num_objects != 0 and cur_num_objects != num_objects):
+      if (cur_num_objects != 0):
         self.valid_types.append(typ)
     # If debug is true we print the valid types:
     if (self.args.debug >= 1):
@@ -77,6 +78,7 @@ class Parse:
       for parameter in action.parameters:
         if (parameter.sort not in self.valid_types):
           valid_flag = 0
+          print(action_name)
           break
       # If action is still valid:
       if (valid_flag == 1):
@@ -85,6 +87,7 @@ class Parse:
     if (self.args.debug >= 1):
       print("#-------------------------------------")
       print("VALID ACTIONS: ", self.valid_actions)
+      print("Num of valid actions: ", len(self.valid_actions))
       print("#-------------------------------------")
 
 
@@ -94,7 +97,33 @@ class Parse:
   # we generate preconditions and effects for each predicate:
   def generate_predicate_constraints(self):
 
+    self.predicate_constraints = []
+
     # First generating constraints for types (static predicates):
     for typ in self.valid_types:
-      predicate_constraints = pc(typ.name)
-      #print(predicate_constraints)
+      # If all objects are same type we ignore the type,
+      # WARNING: errors possible debugging to be done if something is wrong:
+      num_objects = len(self.lang.constants())
+      cur_num_objects = len(list(self.lang.get(typ.name).domain()))
+      if (cur_num_objects == num_objects):
+        continue
+      single_predicate_constraints = pc(typ.name)
+      for action_name in self.valid_actions:
+        action = self.parsed_problem.get_action(action_name)
+        for parameter in action.parameters:
+          if (parameter.sort.name == typ.name):
+            single_predicate_constraints.add_prepos_constraint(action_name, parameter.symbol)
+      self.predicate_constraints.append(single_predicate_constraints)
+
+    # TODO For each normal predicates, we add constraints from each action:
+    for predicate in self.lang.predicates:
+      print(predicate.name)
+
+
+
+
+    if (self.args.debug >= 1):
+      print("-------------------------------------------------")
+      print("Predicate constraints: ")
+      for single_predicate_constraints in self.predicate_constraints:
+        print(single_predicate_constraints)
