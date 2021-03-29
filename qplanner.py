@@ -2,7 +2,7 @@
 
 import os
 import argparse, textwrap
-import parser as ps
+from parser import Parse as ps
 
 
 
@@ -52,4 +52,8 @@ if __name__ == '__main__':
     print("ERROR: cannot extract plan with bloqqer, use bloqqer-qdo instead")
     exit()
 
-  ps.parse(args)
+  parsed_instance = ps(args)
+
+  # Instead of action specific constraints,
+  # predicate specific constraints are generated:
+  parsed_instance.generate_predicate_constraints()
