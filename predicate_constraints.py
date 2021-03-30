@@ -16,6 +16,17 @@ class PredicateConstraints:
     '\n  positive_effects: ' + str(self.pos_eff) + \
     '\n  negative_effects: ' + str(self.neg_eff) + '\n'
 
-  def add_prepos_constraint(self, action_name, predicate_parameters):
-    # action name and predicate parameters are added as a tuple:
+  # Action name and predicate parameters are added as a tuple,
+  # predicate parameters are a list here:
+  def add_pospre_constraint(self, action_name, predicate_parameters):
+    assert(type(predicate_parameters) == list)
     self.pos_pre.append((action_name, predicate_parameters))
+  def add_negpre_constraint(self, action_name, predicate_parameters):
+    assert(type(predicate_parameters) == list)
+    self.neg_pre.append((action_name, predicate_parameters))
+  def add_poseff_constraint(self, action_name, predicate_parameters):
+    assert(type(predicate_parameters) == list)
+    self.pos_eff.append((action_name, predicate_parameters))
+  def add_negeff_constraint(self, action_name, predicate_parameters):
+    assert(type(predicate_parameters) == list)
+    self.neg_eff.append((action_name, predicate_parameters))

@@ -1,6 +1,8 @@
 # Irfansha Shaik, 25.03.2021, Aarhus
 
 from tarski.io import PDDLReader
+from tarski.syntax import formulas as fr
+from tarski.fstrips import fstrips as fs
 from predicate_constraints import PredicateConstraints as pc
 
 class Parse:
@@ -91,6 +93,14 @@ class Parse:
       print("#-------------------------------------")
 
 
+  # Helper function to get the parameter symbols of
+  # a single predicate:
+  def get_parameter_symbols(self, subformula):
+    parameter_list = []
+    for subterm in subformula.subterms:
+      parameter_list.append(subterm.symbol)
+    return parameter_list
+
 
   # Generates predicate specific constraints, in PDDL specification
   # for each action the preconditions and effects are specified here
@@ -112,12 +122,43 @@ class Parse:
         action = self.parsed_problem.get_action(action_name)
         for parameter in action.parameters:
           if (parameter.sort.name == typ.name):
-            single_predicate_constraints.add_prepos_constraint(action_name, parameter.symbol)
+            single_predicate_constraints.add_pospre_constraint(action_name, [parameter.symbol])
       self.predicate_constraints.append(single_predicate_constraints)
 
-    # TODO For each normal predicates, we add constraints from each action:
+    # For each normal predicates, we add constraints from each action,
+    # WARNING: generating constraints, errors possible,
+    # TODO: add rigorous testing for several domains:
     for predicate in self.lang.predicates:
-      print(predicate.name)
+      # Handling =, != symbols by converting them to strings:
+      single_predicate_constraints = pc(str(predicate.name))
+      for action_name in self.valid_actions:
+        action = self.parsed_problem.get_action(action_name)
+        # Adding preconditons to constraints:
+        for subformula in action.precondition.subformulas:
+          # If it is negative atom, then we need to consider as
+          # compund formula:
+          if(fr.is_neg(subformula)):
+            # Asserting negation connective:
+            assert(subformula.connective == fr.Connective.Not)
+            # Asserting single subformula:
+            assert(len(subformula.subformulas) == 1)
+            cur_predicate = subformula.subformulas[0]
+            if(cur_predicate.predicate.name == predicate.name):
+              single_predicate_constraints.add_negpre_constraint(action_name, self.get_parameter_symbols(cur_predicate))
+          else:
+            if (subformula.predicate.name == predicate.name):
+              single_predicate_constraints.add_pospre_constraint(action_name, self.get_parameter_symbols(subformula))
+        # Adding effects to constraints:
+        for effect in action.effects:
+          if (isinstance(effect, fs.AddEffect)):
+            if (effect.atom.predicate.name == predicate.name):
+              single_predicate_constraints.add_poseff_constraint(action_name, self.get_parameter_symbols(effect.atom))
+          else:
+            assert(isinstance(effect, fs.DelEffect))
+            if (effect.atom.predicate.name == predicate.name):
+              single_predicate_constraints.add_negeff_constraint(action_name, self.get_parameter_symbols(effect.atom))
+            #print(effect, effect.atom.predicate)
+      self.predicate_constraints.append(single_predicate_constraints)
 
 
 
