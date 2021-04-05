@@ -1,5 +1,6 @@
 # Irfansha Shaik, 25.03.2021, Aarhus
 
+import os
 from tarski.io import PDDLReader
 from tarski.syntax import formulas as fr
 from tarski.fstrips import fstrips as fs
@@ -10,9 +11,11 @@ class Parse:
   # Parses domain and problem file:
   def __init__(self, args):
     reader = PDDLReader(raise_on_error=True)
-    reader.parse_domain(args.path + args.domain)
+    domain_path = os.path.join(args.path, args.domain)
+    problem_path = os.path.join(args.path, args.problem)
+    reader.parse_domain(domain_path)
     self.args = args
-    self.parsed_problem = reader.parse_instance(self.args.path + self.args.problem)
+    self.parsed_problem = reader.parse_instance(problem_path)
     # In tarski language is seperated from problem itself:
     self.lang = self.parsed_problem.language
     self.valid_types = []
@@ -80,7 +83,8 @@ class Parse:
       for parameter in action.parameters:
         if (parameter.sort not in self.valid_types):
           valid_flag = 0
-          print(action_name)
+          if (self.args.debug >= 1):
+            print(action_name)
           break
       # If action is still valid:
       if (valid_flag == 1):
