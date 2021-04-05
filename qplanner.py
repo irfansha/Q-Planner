@@ -10,6 +10,7 @@ TODOS:
 import os
 import argparse, textwrap
 from parse.parser import Parse as ps
+import testing.tests as ts
 
 
 
@@ -58,6 +59,12 @@ if __name__ == '__main__':
   if (args.preprocessing == 1 and args.run == 2):
     print("ERROR: cannot extract plan with bloqqer, use bloqqer-qdo instead")
     exit()
+
+  # Run tests include all testcase domains:
+  if (args.run_tests == 1):
+    ts.run_tests(args)
+    exit()
+
 
   parsed_instance = ps(args)
 
