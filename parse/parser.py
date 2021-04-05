@@ -3,7 +3,7 @@
 from tarski.io import PDDLReader
 from tarski.syntax import formulas as fr
 from tarski.fstrips import fstrips as fs
-from predicate_constraints import PredicateConstraints as pc
+from constraints.predicate_constraints import PredicateConstraints as pc
 
 class Parse:
 
