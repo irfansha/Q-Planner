@@ -133,21 +133,29 @@ class Parse:
       single_predicate_constraints = pc(str(predicate.name))
       for action_name in self.valid_actions:
         action = self.parsed_problem.get_action(action_name)
+        # If single condition, then not a compound formula
+        # so handling both conditions:
+        if (fr.is_atom(action.precondition)):
+          preconditions_list = [action.precondition]
+        elif(isinstance(action.precondition, fr.Tautology)):
+          preconditions_list = []
+        else:
+          preconditions_list = action.precondition.subformulas
         # Adding preconditons to constraints:
-        for subformula in action.precondition.subformulas:
+        for precondition in preconditions_list:
           # If it is negative atom, then we need to consider as
           # compund formula:
-          if(fr.is_neg(subformula)):
+          if(fr.is_neg(precondition)):
             # Asserting negation connective:
-            assert(subformula.connective == fr.Connective.Not)
-            # Asserting single subformula:
-            assert(len(subformula.subformulas) == 1)
-            cur_predicate = subformula.subformulas[0]
+            assert(precondition.connective == fr.Connective.Not)
+            # Asserting single precondition:
+            assert(len(precondition.subformulas) == 1)
+            cur_predicate = precondition.subformulas[0]
             if(cur_predicate.predicate.name == predicate.name):
               single_predicate_constraints.add_negpre_constraint(action_name, self.get_parameter_symbols(cur_predicate))
           else:
-            if (subformula.predicate.name == predicate.name):
-              single_predicate_constraints.add_pospre_constraint(action_name, self.get_parameter_symbols(subformula))
+            if (precondition.predicate.name == predicate.name):
+              single_predicate_constraints.add_pospre_constraint(action_name, self.get_parameter_symbols(precondition))
         # Adding effects to constraints:
         for effect in action.effects:
           if (isinstance(effect, fs.AddEffect)):
