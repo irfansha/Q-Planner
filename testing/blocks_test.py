@@ -10,10 +10,11 @@ def test_blocks_domain(args):
   args.domain = 'domain.pddl'
   args.problem = 'prob01.pddl'
   args.debug = 0
-  #print(args)
-  parsed_instance = ps(args)
 
-  # Instead of action specific constraints,
-  # predicate specific constraints are generated:
+  parsed_instance = ps(args)
   parsed_instance.generate_predicate_constraints()
+
+  assert(len(parsed_instance.valid_types) == 2)
+  assert(len(parsed_instance.valid_actions) == 4)
+  # TODO: write a generate test for newly generated predicate constraints
   return 1

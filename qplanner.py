@@ -62,6 +62,9 @@ if __name__ == '__main__':
 
   # Run tests include all testcase domains:
   if (args.run_tests == 1):
+    # We do not print any additional information:
+    if (args.debug != 0):
+      args.debug = 0
     ts.run_tests(args)
     exit()
 

@@ -173,8 +173,6 @@ class Parse:
       self.predicate_constraints.append(single_predicate_constraints)
 
 
-
-
     if (self.args.debug >= 1):
       print("-------------------------------------------------")
       print("Predicate constraints: ")
