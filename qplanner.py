@@ -9,7 +9,7 @@ TODOS:
 
 import os
 import argparse, textwrap
-from parser import Parse as ps
+from parse.parser import Parse as ps
 
 
 
@@ -18,7 +18,7 @@ if __name__ == '__main__':
   text = "A tool to encode PDDL (strips) problems to SAT/QBF encodings and compute a plan if exists"
   parser = argparse.ArgumentParser(description=text,formatter_class=argparse.RawTextHelpFormatter)
   parser.add_argument("-V", "--version", help="show program version", action="store_true")
-  parser.add_argument("--path", help="path for domain and problem files", default = 'testcases/Blocks/')
+  parser.add_argument("--path", help="path for domain and problem files", default = 'testing/testcases/Blocks/')
   parser.add_argument("--domain", help="domain file path", default = 'domain.pddl')
   parser.add_argument("--problem", help="problem file path", default = 'prob01.pddl')
   parser.add_argument("--plan_out", help="plan output file path", default = 'cur_plan.txt')
