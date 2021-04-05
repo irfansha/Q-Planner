@@ -1,5 +1,12 @@
 # Irfansha Shaik, 25.03.2021, Aarhus
 
+'''
+TODOS:
+  1. Separate == from predicates and generate gates without forall variables.
+  2. If an argument is either a constant or a parameter of type with one object,
+     generate the fixed clause directly.
+'''
+
 import os
 import argparse, textwrap
 from parser import Parse as ps
@@ -41,7 +48,7 @@ if __name__ == '__main__':
 
 
 
-  # print(args)
+  print(args)
 
   if args.version:
     print("Version 0.1")
