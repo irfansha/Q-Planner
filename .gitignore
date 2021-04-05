@@ -126,7 +126,7 @@ venv.bak/
 dmypy.json
 
 # Testcases files
-testcases/*
+testing/testcases/*
 
 # Pyre type checker
 .pyre/
