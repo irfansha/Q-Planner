@@ -5,6 +5,9 @@ TODOS:
   1. Separate == from predicates and generate gates without forall variables.
   2. If an argument is either a constant or a parameter of type with one object,
      generate the fixed clause directly.
+  3. Use more parameter variables to restrict the search space specific to types.
+  4. Similar constraints on forall variables to be added by considering only the
+     combinations that hold (infering from predicate type combinations).
 '''
 
 import os
