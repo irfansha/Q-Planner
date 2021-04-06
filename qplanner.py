@@ -3,11 +3,10 @@
 '''
 TODOS:
   1. Separate == from predicates and generate gates without forall variables.
-  2. If an argument is either a constant or a parameter of type with one object,
-     generate the fixed clause directly.
-  3. Use more parameter variables to restrict the search space specific to types.
-  4. Similar constraints on forall variables to be added by considering only the
-     combinations that hold (infering from predicate type combinations).
+  2. If an argument is a constant generate the fixed clause directly.
+  3. We add psuedo-grounded constraints for restricting search space for action variables
+     based on grounding of static-predicates.
+  4. We also add constraints for forall variables based on predicate types to restrict search space.
 '''
 
 import os
