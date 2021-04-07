@@ -16,5 +16,4 @@ def test_blocks_domain(args):
 
   assert(len(parsed_instance.valid_types) == 2)
   assert(len(parsed_instance.valid_actions) == 4)
-  # TODO: write a generate test for newly generated predicate constraints
   return 1
