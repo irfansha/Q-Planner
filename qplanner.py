@@ -5,7 +5,7 @@ TODOS:
   1. Separate == from predicates and generate gates without forall variables.
   2. If an argument is a constant generate the fixed clause directly.
   3. We add psuedo-grounded constraints for restricting search space for action variables
-     based on grounding of static-predicates.
+     based on psuedo-grounding of static-predicates.
   4. We also add constraints for forall variables based on predicate types to restrict search space.
 '''
 
@@ -13,6 +13,7 @@ import os
 import argparse, textwrap
 from parse.parser import Parse as ps
 import testing.tests as ts
+from transition_function.simple_transition_function import SimpleTransitionFunction as stf
 
 
 
@@ -76,3 +77,6 @@ if __name__ == '__main__':
   # Instead of action specific constraints,
   # predicate specific constraints are generated:
   parsed_instance.generate_predicate_constraints()
+
+  # Generating simple transition function:
+  tfunc = stf(parsed_instance)
