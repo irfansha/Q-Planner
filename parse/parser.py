@@ -55,6 +55,7 @@ class Parse:
       print("PARSED PROBLEM:\n")
       print("  Initial State: ", self.parsed_problem.init.as_atoms())
       print("  Goal State: ", self.parsed_problem.goal)
+      print("  Objects: ", self.lang.constants())
       # constants and objects are combinedly called constants:
       for tp in self.lang.sorts:
         print("  Objects of type " + (tp.name) , list(self.lang.get(tp.name).domain()))
