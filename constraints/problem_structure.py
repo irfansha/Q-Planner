@@ -1,5 +1,7 @@
 # Irfansha Shaik, 07.04.2021, Aarhus.
 
+import math
+
 class ProblemInfo:
 
   def __init__(self, parsed_instance):
@@ -27,6 +29,9 @@ class ProblemInfo:
     # To be updated to correct values:
     self.max_action_parameters = 0
     self.max_predicate_parameters = 0
+    self.num_action_variables = 0
+    self.num_parameter_variables = 0
+
     # if valid types are present we start the max static predicates with 1,
     # WARNING: some error might creep in here:
     if (len(parsed_instance.valid_types) == 0):
@@ -55,6 +60,11 @@ class ProblemInfo:
       if (self.max_action_parameters < len(action.parameters)):
         self.max_action_parameters = len(action.parameters)
 
+    # Computing the number of variables required in log form,
+    # we also consider noop action:
+    self.num_action_variables = math.ceil(math.log2(self.num_valid_actions + 1))
+    self.num_parameter_variables = math.ceil(math.log2(self.num_objects))
+
   def __str__(self):
     return '\n Problem parsed info: ' + \
     '\n  static predicates: ' + str(self.static_predicates) + \
@@ -68,4 +78,6 @@ class ProblemInfo:
     '\n  max predicates arity: ' + str(self.max_predicate_parameters) + \
     '\n\n  max actions arity: ' + str(self.max_action_parameters) + \
     '\n\n  number of valid actions: ' + str(self.num_valid_actions) + \
-    '\n  number of objects: ' + str(self.num_objects) + '\n'
+    '\n  number of objects: ' + str(self.num_objects) + \
+    '\n\n  number of action variables: ' + str(self.num_action_variables) + \
+    '\n  number of parameter variables: ' + str(self.num_parameter_variables) + '\n'
