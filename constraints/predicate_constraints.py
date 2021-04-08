@@ -10,11 +10,11 @@ class PredicateConstraints:
     self.neg_eff = []
 
   def __str__(self):
-    return 'prediate: ' + self.name + \
-    '\n  positive preconditions: ' + str(self.pos_pre) + \
-    '\n  negative_preconditions: ' + str(self.neg_pre) + \
-    '\n  positive_effects: ' + str(self.pos_eff) + \
-    '\n  negative_effects: ' + str(self.neg_eff) + '\n'
+    return '  prediate: ' + self.name + \
+    '\n    positive preconditions: ' + str(self.pos_pre) + \
+    '\n    negative_preconditions: ' + str(self.neg_pre) + \
+    '\n    positive_effects: ' + str(self.pos_eff) + \
+    '\n    negative_effects: ' + str(self.neg_eff) + '\n'
 
   # Action name and predicate parameters are added as a tuple,
   # predicate parameters are a list here:

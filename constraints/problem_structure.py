@@ -66,7 +66,8 @@ class ProblemInfo:
     self.num_parameter_variables = math.ceil(math.log2(self.num_objects))
 
   def __str__(self):
-    return '\n Problem parsed info: ' + \
+    return '\n #------------------------------------------------------------------------' + \
+    '\n Problem parsed info: ' + \
     '\n  static predicates: ' + str(self.static_predicates) + \
     '\n  non-static predicates: ' + str(self.non_static_predicates) + \
     '\n  valid actions: ' + str(self.valid_actions) + \
@@ -80,4 +81,5 @@ class ProblemInfo:
     '\n\n  number of valid actions: ' + str(self.num_valid_actions) + \
     '\n  number of objects: ' + str(self.num_objects) + \
     '\n\n  number of action variables: ' + str(self.num_action_variables) + \
-    '\n  number of parameter variables: ' + str(self.num_parameter_variables) + '\n'
+    '\n  number of parameter variables: ' + str(self.num_parameter_variables) + \
+    '\n #------------------------------------------------------------------------\n'

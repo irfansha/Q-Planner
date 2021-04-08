@@ -30,7 +30,7 @@ class Parse:
     # If debug is true we print all the information,
     # here all the parsed information:
     if (args.debug == 2):
-      print("#------------------------------------")
+      print("#------------------------------------------------------------------------")
       print("PARSED DOMAIN:\n")
       # sorts are types in tarski:
       print("  Types: ", self.lang.sorts)
@@ -50,8 +50,7 @@ class Parse:
         print("    preconditions: ", action.precondition)
         print("    effects: ", action.effects)
         #print(action.effects[0].atom.predicate.arity)
-      print("#------------------------------------\n")
-      print("#------------------------------------")
+      print("#------------------------------------------------------------------------\n")
       print("PARSED PROBLEM:\n")
       print("  Initial State: ", self.parsed_problem.init.as_atoms())
       print("  Goal State: ", self.parsed_problem.goal)
@@ -59,6 +58,7 @@ class Parse:
       # constants and objects are combinedly called constants:
       for tp in self.lang.sorts:
         print("  Objects of type " + (tp.name) , list(self.lang.get(tp.name).domain()))
+      print("#------------------------------------------------------------------------\n")
 
 
   # Ignoring types with 0 objects:
@@ -69,9 +69,9 @@ class Parse:
         self.valid_types.append(typ)
     # If debug is true we print the valid types:
     if (self.args.debug >= 1):
-      print("#-------------------------------------")
+      print("#------------------------------------------------------------------------")
       print("VALID TYPES: ", self.valid_types)
-      print("#-------------------------------------")
+      print("#------------------------------------------------------------------------\n")
 
 
   def generate_valid_actions(self):
@@ -92,10 +92,10 @@ class Parse:
         self.valid_actions.append(action_name)
     # If debug is true we print the valid types:
     if (self.args.debug >= 1):
-      print("#-------------------------------------")
+      print("#------------------------------------------------------------------------")
       print("VALID ACTIONS: ", self.valid_actions)
       print("Num of valid actions: ", len(self.valid_actions))
-      print("#-------------------------------------")
+      print("#------------------------------------------------------------------------\n")
 
 
   # Helper function to get the parameter symbols of
@@ -175,7 +175,8 @@ class Parse:
 
 
     if (self.args.debug >= 1):
-      print("-------------------------------------------------")
+      print("#------------------------------------------------------------------------\n")
       print("Predicate constraints: ")
       for single_predicate_constraints in self.predicate_constraints:
         print(single_predicate_constraints)
+      print("#------------------------------------------------------------------------\n")
