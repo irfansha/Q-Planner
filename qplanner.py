@@ -80,3 +80,7 @@ if __name__ == '__main__':
 
   # Generating simple transition function:
   tfunc = stf(parsed_instance)
+
+  # Printing the transition function is debug is active:
+  if (args.debug >= 1):
+    print(tfunc)
