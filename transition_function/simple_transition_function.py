@@ -6,21 +6,38 @@ from utils.variables_dispatcher import VarDispatcher as vd
 class SimpleTransitionFunction:
 
   def map_generator(self):
-    # TODO: generate log action variables and add to map
-    # TODO: generate log varibles for parameters and add to map
-    # TODO: generate forall variables
-    # TODO: generate static variables and add to map
-    # TODO: generate non-static variables of two time steps and add to map
-    print(self.variables_map)
+    # TODO: Add all variables to map
+
+    # Generating logarithmic action variables (along with noop):
+    self.action_vars = self.transition_variables.get_vars(self.probleminfo.num_action_variables)
+    # Generating logarithmic parameter variables for max parameter arity:
+    self.parameter_variable_list = []
+    for i in range(self.probleminfo.max_action_parameters):
+      step_parameter_variables = self.transition_variables.get_vars(self.probleminfo.num_parameter_variables)
+      self.parameter_variable_list.append(step_parameter_variables)
+
+    # generating forall varibles with max predicate arity:
+    self.forall_variables_list = []
+    for i in range(self.probleminfo.max_predicate_parameters):
+      # number of parameter variables is same as predicate parameters:
+      step_forall_variables = self.transition_variables.get_vars(self.probleminfo.num_parameter_variables)
+      self.forall_variables_list.append(step_forall_variables)
+
+    # generating static variables only one set is enough, as no propagation:
+    self.static_variables = self.transition_variables.get_vars(self.probleminfo.num_static_predicates)
+
+    # generating two sets of non-static variables for propagation:
+    self.first_non_static_variables = self.transition_variables.get_vars(self.probleminfo.num_non_static_predicates)
+    self.second_non_static_variables = self.transition_variables.get_vars(self.probleminfo.num_non_static_predicates)
 
 
   def __init__(self, parsed_instance):
     self.probleminfo = pinfo(parsed_instance)
     self.variables_map = dict()
 
-    #print(probleminfo)
+    print(self.probleminfo)
     # Using variable dispatcher for new integer variables:
-    transition_variables = vd()
+    self.transition_variables = vd()
 
     # TODO: map generator function from variables to integer variables
     self.map_generator()
@@ -28,5 +45,12 @@ class SimpleTransitionFunction:
 
     # TODO: using the map and new gates generator, add new transition generator
 
+
   def __str__(self):
-    return 'TODO'
+    return '\n Simple Transition Function: ' + \
+    '\n  Action vars: ' + str(self.action_vars) + \
+    '\n  Parameter vars: ' + str(self.parameter_variable_list) + \
+    '\n  Forall vars: ' + str(self.forall_variables_list) + \
+    '\n  Static vars: ' + str(self.static_variables) + \
+    '\n  First non-static vars: ' + str(self.first_non_static_variables) + \
+    '\n  Second non-static vars: ' + str(self.second_non_static_variables) + '\n'
