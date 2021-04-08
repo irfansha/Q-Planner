@@ -11,5 +11,9 @@ class SimpleTransitionFunction:
     # Using variable dispatcher for new integer variables:
     transition_variables = vd()
 
+    # TODO: map generator function from variables to integer variables
+
+    # TODO: using the map and new gates generator, add new transition generator
+
   def __str__(self):
     return 'TODO'
