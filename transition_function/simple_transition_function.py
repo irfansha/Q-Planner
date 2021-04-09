@@ -31,9 +31,26 @@ class SimpleTransitionFunction:
     self.second_non_static_variables = self.transition_variables.get_vars(self.probleminfo.num_non_static_predicates)
 
 
+    # Adding action variables:
+    for i in range(self.probleminfo.num_valid_actions):
+      # Representation in binary requires number of action variables:
+      rep_string = '0' + str(self.probleminfo.num_action_variables) + 'b'
+      bin_string = format(i, rep_string)
+      cur_action_variable_list = []
+      # Depending on the binary string we set action variables to '+' or '-':
+      for j in range(self.probleminfo.num_action_variables):
+        if (bin_string[j] == '0'):
+          cur_action_variable_list.append(-self.action_vars[j])
+        else:
+          cur_action_variable_list.append(self.action_vars[j])
+      self.variables_map[self.probleminfo.valid_actions[i]] = cur_action_variable_list
+
+
+
   def __init__(self, parsed_instance):
     self.probleminfo = pinfo(parsed_instance)
     self.variables_map = dict()
+    self.string_variables_map = ''
 
     print(self.probleminfo)
     # Using variable dispatcher for new integer variables:
@@ -41,7 +58,7 @@ class SimpleTransitionFunction:
 
     # TODO: map generator function from variables to integer variables
     self.map_generator()
-
+    self.string_variables_map = "   {" + "\n    ".join("{!r}: {!r},".format(k, v) for k, v in self.variables_map.items()) + "}"
 
     # TODO: using the map and new gates generator, add new transition generator
 
@@ -53,4 +70,5 @@ class SimpleTransitionFunction:
     '\n  Forall vars: ' + str(self.forall_variables_list) + \
     '\n  Static vars: ' + str(self.static_variables) + \
     '\n  First non-static vars: ' + str(self.first_non_static_variables) + \
-    '\n  Second non-static vars: ' + str(self.second_non_static_variables) + '\n'
+    '\n  Second non-static vars: ' + str(self.second_non_static_variables) + \
+    '\n\n  Variables map: \n' + str(self.string_variables_map) + '\n'
