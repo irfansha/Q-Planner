@@ -2,12 +2,11 @@
 
 from constraints.problem_structure import ProblemInfo as pinfo
 from utils.variables_dispatcher import VarDispatcher as vd
+from utils.gates import GatesGen as gg
 
 class SimpleTransitionFunction:
 
-  def map_generator(self, parsed_instance):
-    # TODO: Add all variables to map
-
+  def map_generator(self):
     # Generating logarithmic action variables (along with noop):
     self.action_vars = self.transition_variables.get_vars(self.probleminfo.num_action_variables)
     # Generating logarithmic parameter variables for max parameter arity:
@@ -30,7 +29,6 @@ class SimpleTransitionFunction:
     self.first_non_static_variables = self.transition_variables.get_vars(self.probleminfo.num_non_static_predicates)
     self.second_non_static_variables = self.transition_variables.get_vars(self.probleminfo.num_non_static_predicates)
 
-
     # Adding action variables:
     for i in range(self.probleminfo.num_valid_actions):
       # Representation in binary requires number of action variables:
@@ -47,7 +45,7 @@ class SimpleTransitionFunction:
 
     # Adding action parameter variables:
     for action_name in self.probleminfo.valid_actions:
-      action = parsed_instance.parsed_problem.get_action(action_name)
+      action = self.parsed_instance.parsed_problem.get_action(action_name)
       # The key here is a tuple with action name and parameter symbol:
       for i in range(len(action.parameters)):
         self.variables_map[(action_name, action.parameters[i].symbol)] = self.parameter_variable_list[i]
@@ -65,22 +63,77 @@ class SimpleTransitionFunction:
       self.variables_map[(self.probleminfo.non_static_predicates[i], 'second')] = self.second_non_static_variables[i]
 
 
+  # Generates gate for single predicate constraint:
+  def generate_single_gate(self, constraint):
+    action_name = constraint[0]
+    parameters = constraint[1]
+    parameter_gates = []
+    # Loop through each parameter and generate equality gates:
+    for i in range(len(parameters)):
+      parameter = parameters[i]
+      # TODO: handle if a parameter is constant:
+      assert('?' in parameter)
+      parameter_variables = self.variables_map[(action_name, parameter)]
+      forall_varaibles = self.forall_variables_list[i]
+      # Printing for redability:
+      self.transition_gates.append(['# Equality gate for action parameter: (' + str(action_name) + ',' + str(parameter) + ') and ' + str(i) + 'th forall variables'])
+      self.transition_gates.append(['# parameter vars : (' + ', '.join(str(x) for x in parameter_variables) + ')'])
+      self.transition_gates.append(['# forall vars : (' + ', '.join(str(x) for x in forall_varaibles) + ')'])
+
+      self.gates_generator.complete_equality_gate(parameter_variables, forall_varaibles)
+      parameter_gates.append(self.gates_generator.output_gate)
+    # Generating action name gate:
+    self.transition_gates.append(['# And gate for action: ' + str(action_name)])
+    self.gates_generator.and_gate(self.variables_map[action_name])
+    action_name_gate = self.gates_generator.output_gate
+    # Generating and gate for action name and all parameter gates:
+    all_gates = []
+    all_gates.extend(parameter_gates)
+    all_gates.append(action_name_gate)
+    parameter_gates.append(action_name_gate)
+
+    self.gates_generator.and_gate(all_gates)
+    return self.gates_generator.output_gate
+
+  def generate_transition_function(self):
+    self.gates_generator = gg(self.transition_variables, self.transition_gates)
+
+    # Generating gates for static predicates:
+    for static_predicate in self.probleminfo.static_predicates:
+      # Looping through predicate constraints list for the current predicate:
+      for single_predicate_constraints in self.parsed_instance.predicate_constraints:
+        if (static_predicate == single_predicate_constraints.name):
+          assert(len(single_predicate_constraints.pos_eff) == 0 and len(single_predicate_constraints.neg_eff) == 0)
+          positive_precondition_gates = []
+          for precondition in single_predicate_constraints.pos_pre:
+            output_gate = self.generate_single_gate(precondition)
+            positive_precondition_gates.append(output_gate)
+          print(positive_precondition_gates)
+
+    # TODO: gates for non-static predicates:
+    # TODO: equality gates, only with parameter variables:
+
   def __init__(self, parsed_instance):
     self.probleminfo = pinfo(parsed_instance)
+    self.parsed_instance = parsed_instance
     self.variables_map = dict()
     self.string_variables_map = ''
+    self.transition_gates = []
 
-    if (parsed_instance.args.debug >= 1):
+    if (self.parsed_instance.args.debug >= 1):
       print(self.probleminfo)
     # Using variable dispatcher for new integer variables:
     self.transition_variables = vd()
 
     # Mapping variables to integer variables for encoding:
-    self.map_generator(parsed_instance)
+    self.map_generator()
     self.string_variables_map = "   {" + "\n    ".join("{!r}: {!r},".format(k, v) for k, v in self.variables_map.items()) + "}"
 
     # TODO: using the map and new gates generator, add new transition generator
-
+    self.generate_transition_function()
+    self.string_transition_gates = ''
+    for gate in self.transition_gates:
+        self.string_transition_gates += str(gate) + "\n"
 
   def __str__(self):
     return '\n Simple Transition Function: ' + \
@@ -90,4 +143,5 @@ class SimpleTransitionFunction:
     '\n  Static vars: ' + str(self.static_variables) + \
     '\n  First non-static vars: ' + str(self.first_non_static_variables) + \
     '\n  Second non-static vars: ' + str(self.second_non_static_variables) + \
-    '\n\n  Variables map: \n' + str(self.string_variables_map) + '\n'
+    '\n\n  Variables map: \n' + str(self.string_variables_map) + \
+    '\n\n  Transition gates: \n' + str(self.string_transition_gates) + '\n'
