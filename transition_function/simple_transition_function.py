@@ -5,7 +5,7 @@ from utils.variables_dispatcher import VarDispatcher as vd
 
 class SimpleTransitionFunction:
 
-  def map_generator(self):
+  def map_generator(self, parsed_instance):
     # TODO: Add all variables to map
 
     # Generating logarithmic action variables (along with noop):
@@ -45,6 +45,24 @@ class SimpleTransitionFunction:
           cur_action_variable_list.append(self.action_vars[j])
       self.variables_map[self.probleminfo.valid_actions[i]] = cur_action_variable_list
 
+    # Adding action parameter variables:
+    for action_name in self.probleminfo.valid_actions:
+      action = parsed_instance.parsed_problem.get_action(action_name)
+      # The key here is a tuple with action name and parameter symbol:
+      for i in range(len(action.parameters)):
+        self.variables_map[(action_name, action.parameters[i].symbol)] = self.parameter_variable_list[i]
+
+    # Adding static variables to map:
+    for i in range(len(self.probleminfo.static_predicates)):
+      self.variables_map[self.probleminfo.static_predicates[i]] = self.static_variables[i]
+
+    # Adding first-step non-static variables to map:
+    for i in range(len(self.probleminfo.non_static_predicates)):
+      self.variables_map[(self.probleminfo.non_static_predicates[i], 'first')] = self.first_non_static_variables[i]
+
+    # Adding first-step non-static variables to map:
+    for i in range(len(self.probleminfo.non_static_predicates)):
+      self.variables_map[(self.probleminfo.non_static_predicates[i], 'second')] = self.second_non_static_variables[i]
 
 
   def __init__(self, parsed_instance):
@@ -52,12 +70,13 @@ class SimpleTransitionFunction:
     self.variables_map = dict()
     self.string_variables_map = ''
 
-    print(self.probleminfo)
+    if (parsed_instance.args.debug >= 1):
+      print(self.probleminfo)
     # Using variable dispatcher for new integer variables:
     self.transition_variables = vd()
 
-    # TODO: map generator function from variables to integer variables
-    self.map_generator()
+    # Mapping variables to integer variables for encoding:
+    self.map_generator(parsed_instance)
     self.string_variables_map = "   {" + "\n    ".join("{!r}: {!r},".format(k, v) for k, v in self.variables_map.items()) + "}"
 
     # TODO: using the map and new gates generator, add new transition generator
