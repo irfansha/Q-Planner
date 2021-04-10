@@ -186,6 +186,8 @@ class SimpleTransitionFunction:
       # Add seperator in encoding for better redability:
       self.transition_gates.append(["# ------------------------------------------------------------------------"])
 
+    # TODO: add constraints for not possible actions and parameter combinations
+
     # TODO: equality gates, only with parameter variables:
     for single_predicate_constraints in self.parsed_instance.predicate_constraints:
       if (single_predicate_constraints.name == '='):
