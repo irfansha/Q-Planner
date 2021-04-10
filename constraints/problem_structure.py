@@ -64,6 +64,8 @@ class ProblemInfo:
     # we also consider noop action:
     self.num_action_variables = math.ceil(math.log2(self.num_valid_actions + 1))
     self.num_parameter_variables = math.ceil(math.log2(self.num_objects))
+    self.num_possible_actions = int(math.pow(2, self.num_action_variables))
+    self.num_possible_parameter_values = int(math.pow(2, self.num_parameter_variables))
 
   def __str__(self):
     return '\n #------------------------------------------------------------------------' + \
@@ -82,4 +84,6 @@ class ProblemInfo:
     '\n  number of objects: ' + str(self.num_objects) + \
     '\n\n  number of action variables: ' + str(self.num_action_variables) + \
     '\n  number of parameter variables: ' + str(self.num_parameter_variables) + \
+    '\n  number of possible actions: ' + str(self.num_possible_actions) + \
+    '\n  number of possible parameter values: ' + str(self.num_possible_parameter_values) + \
     '\n #------------------------------------------------------------------------\n'

@@ -31,16 +31,7 @@ class SimpleTransitionFunction:
 
     # Adding action variables:
     for i in range(self.probleminfo.num_valid_actions):
-      # Representation in binary requires number of action variables:
-      rep_string = '0' + str(self.probleminfo.num_action_variables) + 'b'
-      bin_string = format(i, rep_string)
-      cur_action_variable_list = []
-      # Depending on the binary string we set action variables to '+' or '-':
-      for j in range(self.probleminfo.num_action_variables):
-        if (bin_string[j] == '0'):
-          cur_action_variable_list.append(-self.action_vars[j])
-        else:
-          cur_action_variable_list.append(self.action_vars[j])
+      cur_action_variable_list = self.generate_binary_format(self.action_vars, i)
       self.variables_map[self.probleminfo.valid_actions[i]] = cur_action_variable_list
 
     # Adding action parameter variables:
@@ -108,6 +99,22 @@ class SimpleTransitionFunction:
     # Generate if then gate for the predicate:
     self.transition_gates.append(['# If then gate for the predicate:'])
     self.gates_generator.if_then_gate(self.gates_generator.output_gate, predicate_variable)
+
+
+  # Takes a list of clause variables and maps to a integer value:
+  def generate_binary_format(self, clause_variables, corresponding_number):
+    num_variables = len(clause_variables)
+    # Representation in binary requires number of variables:
+    rep_string = '0' + str(num_variables) + 'b'
+    bin_string = format(corresponding_number, rep_string)
+    cur_variable_list = []
+    # Depending on the binary string we set action variables to '+' or '-':
+    for j in range(num_variables):
+      if (bin_string[j] == '0'):
+        cur_variable_list.append(-clause_variables[j])
+      else:
+        cur_variable_list.append(clause_variables[j])
+    return cur_variable_list
 
 
   def generate_transition_function(self):
@@ -186,7 +193,37 @@ class SimpleTransitionFunction:
       # Add seperator in encoding for better redability:
       self.transition_gates.append(["# ------------------------------------------------------------------------"])
 
-    # TODO: add constraints for not possible actions and parameter combinations
+    invalid_action_gates = []
+    # Generating negative constraints for impossible actions, ignore noop action:
+    self.transition_gates.append(['# Invalid action gates: '])
+    for i in range(self.probleminfo.num_valid_actions + 1, self.probleminfo.num_possible_actions):
+      cur_invalid_action_vars_list = self.generate_binary_format(self.action_vars, i)
+      self.gates_generator.and_gate(cur_invalid_action_vars_list)
+      invalid_action_gates.append(self.gates_generator.output_gate)
+
+    # Or gate to check if any one of them is true:
+    if (len(invalid_action_gates) != 0):
+      self.gates_generator.or_gate(invalid_action_gates)
+      self.invalid_actions_final_gate = self.gates_generator.output_gate
+      # Adding negative of invalid or gates:
+      predicate_final_gates.append(-self.invalid_actions_final_gate)
+
+    invalid_parameter_gates = []
+    # Generating negative constraints for impossible parameter values:
+    self.transition_gates.append(['# Invalid parameter gates: '])
+    for parameter_vars in self.parameter_variable_list:
+      for i in range(self.probleminfo.num_objects, self.probleminfo.num_possible_parameter_values):
+        cur_invalid_parameter_vars_list = self.generate_binary_format(parameter_vars, i)
+        self.gates_generator.and_gate(cur_invalid_parameter_vars_list)
+        invalid_parameter_gates.append(self.gates_generator.output_gate)
+
+    # Or gate to check if any one of them is true:
+    if (len(invalid_parameter_gates) != 0):
+      self.gates_generator.or_gate(invalid_parameter_gates)
+      self.invalid_parameters_final_gate = self.gates_generator.output_gate
+      # Adding negative of invalid or gates:
+      predicate_final_gates.append(-self.invalid_parameters_final_gate)
+
 
     # TODO: equality gates, only with parameter variables:
     for single_predicate_constraints in self.parsed_instance.predicate_constraints:
