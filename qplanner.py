@@ -13,8 +13,8 @@ import os
 import argparse, textwrap
 from parse.parser import Parse as ps
 import testing.tests as ts
+import q_encodings.encoder as ge
 from transition_function.simple_transition_function import SimpleTransitionFunction as stf
-
 
 
 # Main:
@@ -86,4 +86,5 @@ if __name__ == '__main__':
     print(tfunc)
 
   # TODO: Add new encoding generator module, and a new simple encoding module
+  ge.generate_encoding(tfunc)
   # TODO: Add new strongly constrained encoding module
