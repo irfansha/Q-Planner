@@ -203,6 +203,8 @@ class SimpleTransitionFunction:
     self.string_variables_map = ''
     self.transition_gates = []
     self.final_transition_gate = 0 # Never be zero
+    self.main_variables = 0 # Never be zero
+    self.num_auxilary_variables = 0 # Never be zero
 
     if (self.parsed_instance.args.debug >= 1):
       print(self.probleminfo)
@@ -213,11 +215,18 @@ class SimpleTransitionFunction:
     self.map_generator()
     self.string_variables_map = "   {" + "\n    ".join("{!r}: {!r},".format(k, v) for k, v in self.variables_map.items()) + "}"
 
-    # TODO: using the map and new gates generator, add new transition generator
+    # Specifying the number of main variables,
+    # next var -1 is the current var:
+    self.num_main_variables = self.transition_variables.next_var - 1
+
+    # Generating transition function:
     self.generate_transition_function()
     self.string_transition_gates = ''
     for gate in self.transition_gates:
         self.string_transition_gates += str(gate) + "\n"
+
+    # Compute number of auxilary variables are needed:
+    self.num_auxilary_variables = self.final_transition_gate - self.num_main_variables
 
   def __str__(self):
     return '\n Simple Transition Function: ' + \
@@ -229,3 +238,25 @@ class SimpleTransitionFunction:
     '\n  Second non-static vars: ' + str(self.second_non_static_variables) + \
     '\n\n  Variables map: \n' + str(self.string_variables_map) + \
     '\n\n  Transition gates: \n' + str(self.string_transition_gates) + '\n'
+
+
+  # Takes the new variables and maps them to original transition function
+  # and appends to encoding list:
+  # WARNING: testing is needed
+  def new_transition_copy(self, copy_vars, encoding):
+    # Replacing in each gate:
+    for gate in self.transition_gates:
+      # We ignore comment gates:
+      if (len(gate) != 1):
+        # Indirectly mapping the list of variables to transition function:
+        new_gate_name = copy_vars[gate[1]-1]
+        new_gate_list = []
+        for prev_gate in gate[2]:
+          if prev_gate > 0:
+            new_gate_list.append(copy_vars[prev_gate-1])
+          else:
+            new_gate_list.append(-copy_vars[(-prev_gate)-1])
+        encoding.append([gate[0], new_gate_name, new_gate_list])
+      else:
+        encoding.append([gate[0]])
+    
