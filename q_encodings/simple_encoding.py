@@ -8,23 +8,18 @@ class SimpleEncoding:
     if len(gate) == 1:
       f.write(gate[0] + '\n')
     else:
-      f.write(str(gate[1]) + ' = ' + gate[0] + '(' + ', '.join(str(x) for x in gate[2]) + ') \n')
+      f.write(str(gate[1]) + ' = ' + gate[0] + '(' + ', '.join(str(x) for x in gate[2]) + ')\n')
 
   def print_encoding_tofile(self, file_path):
     f = open(file_path, 'w')
     for gate in self.quantifier_block:
       self.print_gate_tofile(gate, f)
-    f.write('output(' + str(self.final_output_gate) + ') \n')
+    f.write('output(' + str(self.final_output_gate) + ')\n')
     for gate in self.encoding:
       self.print_gate_tofile(gate, f)
 
   # Generates quanifier blocks:
   def generate_quantifier_blocks(self):
-    # TODO: action and parameter variables
-    # TODO: forall variables
-    # TODO: static variables
-    # TODO: non-static variables
-
     # Action and parameter variables are first existential layer:
     first_layer_variables = []
     self.quantifier_block.append(['# Action and parameter variables :'])
@@ -55,14 +50,42 @@ class SimpleEncoding:
     for i in range(self.tfunc.parsed_instance.args.plan_length + 1):
       self.quantifier_block.append(['# ' + str(self.non_static_variables[i])])
       third_layer_variables.extend(self.non_static_variables[i])
-    self.quantifier_block.append(['forall(' + ', '.join(str(x) for x in third_layer_variables) + ')'])
+    self.quantifier_block.append(['exists(' + ', '.join(str(x) for x in third_layer_variables) + ')'])
 
+  def generate_k_transitions(self):
+    # Generating transition function for each step:
+    for i in range(self.tfunc.parsed_instance.args.plan_length):
+      self.encoding.append(['# Transition funciton for step ' + str(i) + ':'])
+      # Generating auxilary vars:
+      step_aux_vars = self.encoding_variables.get_vars(self.tfunc.num_auxilary_variables)
+      # Appending transition output gates:
+      self.transition_step_output_gates.append(step_aux_vars[-1])
+      # Appending all variables required for one time step:
+      all_vars = []
+      all_vars.extend(self.action_variables[i])
+      # Parameter variables:
+      for j in range(len(self.parameter_variables[i])):
+        all_vars.extend(self.parameter_variables[i][j])
+      # Forall variables:
+      for j in range(len(self.forall_variables_list)):
+        all_vars.extend(self.forall_variables_list[j])
+      # Static predicate variables:
+      all_vars.extend(self.static_variables)
+      # i, i+1 th non-static predicates:
+      all_vars.extend(self.non_static_variables[i])
+      all_vars.extend(self.non_static_variables[i+1])
+      # Auxilary variables:
+      all_vars.extend(step_aux_vars)
+      self.tfunc.new_transition_copy(all_vars, self.encoding)
 
   def __init__(self, tfunc):
     self.tfunc = tfunc
     self.encoding_variables = vd()
     self.quantifier_block = []
     self.encoding = []
+    self.initial_output_gate = 0 # initial output gate can never be 0
+    self.goal_output_gate = 0 # goal output gate can never be 0
+    self.transition_step_output_gates = []
     self.final_output_gate = 0 # Can never be 0
 
 
@@ -98,10 +121,13 @@ class SimpleEncoding:
       step_non_static_variables = self.encoding_variables.get_vars(tfunc.probleminfo.num_non_static_predicates)
       self.non_static_variables.append(step_non_static_variables)
 
-
+    # Generating quantifer blocks:
     self.generate_quantifier_blocks()
+    # Generating k steps i.e., plan length number of transitions:
+    self.generate_k_transitions()
 
-    # TODO: generate k copies of transition function
+    #print(self.transition_step_output_gates)
+
     # TODO: generate gates for initial state
     # TODO: generate gates for goal state
     # TODO: generate restricted constraints for forall varaibles based on types
