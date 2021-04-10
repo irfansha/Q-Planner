@@ -36,7 +36,7 @@ if __name__ == '__main__':
                                1 = test plan existence
                                2 = extract the plan if found'''),default = 2)
   parser.add_argument("--VAL-testing", type=int, help="[0/1], default 0", default = 1)
-  parser.add_argument("--encoding_out", help="output encoding file",default = 'encoding')
+  parser.add_argument("--encoding_out", help="output encoding file",default = 'intermediate_files/encoding')
   parser.add_argument("--solver", type=int, help=textwrap.dedent('''
                                        Solver:
                                        1 = caqe'''),default = 1)
