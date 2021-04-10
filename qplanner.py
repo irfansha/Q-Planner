@@ -84,3 +84,6 @@ if __name__ == '__main__':
   # Printing the transition function is debug is active:
   if (args.debug >= 1):
     print(tfunc)
+
+  # TODO: Add new encoding generator module, and a new simple encoding module
+  # TODO: Add new strongly constrained encoding module
