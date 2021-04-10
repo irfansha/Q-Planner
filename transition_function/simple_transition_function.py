@@ -95,23 +95,106 @@ class SimpleTransitionFunction:
     self.gates_generator.and_gate(all_gates)
     return self.gates_generator.output_gate
 
+  # Takes a list of constraints and generates gates generate single gate function:
+  def constraints_generator(self, constraints, predicate_variable):
+    condition_gates = []
+
+    for constraint in constraints:
+      output_gate = self.generate_single_gate(constraint)
+      condition_gates.append(output_gate)
+    # Only one of the action condition needs to be true:
+    self.transition_gates.append(['# Or gate for condition action gates of the predicate'])
+    self.gates_generator.or_gate(condition_gates)
+    # Generate if then gate for the predicate:
+    self.transition_gates.append(['# If then gate for the predicate:'])
+    self.gates_generator.if_then_gate(self.gates_generator.output_gate, predicate_variable)
+
+
   def generate_transition_function(self):
     self.gates_generator = gg(self.transition_variables, self.transition_gates)
+    # For each type of condition i.e., pos_pre, neg_pre and so on, we gather the gates as and gate
+    # We just gather gates for all predicates:
+    predicate_final_gates = []
 
     # Generating gates for static predicates:
     for static_predicate in self.probleminfo.static_predicates:
+      self.transition_gates.append(['# constraints for "' + str(static_predicate) + '" ----------------------------------------------'])
       # Looping through predicate constraints list for the current predicate:
       for single_predicate_constraints in self.parsed_instance.predicate_constraints:
         if (static_predicate == single_predicate_constraints.name):
           assert(len(single_predicate_constraints.pos_eff) == 0 and len(single_predicate_constraints.neg_eff) == 0)
-          positive_precondition_gates = []
-          for precondition in single_predicate_constraints.pos_pre:
-            output_gate = self.generate_single_gate(precondition)
-            positive_precondition_gates.append(output_gate)
-          print(positive_precondition_gates)
+          # Positive precondition constraints:
+          self.transition_gates.append(['# Postive preconditions: '])
+          if (len(single_predicate_constraints.pos_pre) != 0):
+            self.constraints_generator(single_predicate_constraints.pos_pre, self.variables_map[static_predicate])
+            predicate_final_gates.append(self.gates_generator.output_gate)
+          # Negative precondition constraints:
+          self.transition_gates.append(['# Negative preconditions: '])
+          if (len(single_predicate_constraints.neg_pre) != 0):
+            self.constraints_generator(single_predicate_constraints.neg_pre, -self.variables_map[static_predicate])
+            predicate_final_gates.append(self.gates_generator.output_gate)
+      # Add seperator in encoding for better redability:
+      self.transition_gates.append(["# ------------------------------------------------------------------------"])
 
-    # TODO: gates for non-static predicates:
+    # Generating gates for non-static predicates:
+    for non_static_predicate in self.probleminfo.non_static_predicates:
+      self.transition_gates.append(['# constraints for "' + str(non_static_predicate) + '" ----------------------------------------------'])
+      # Looping through predicate constraints list for the current predicate:
+      for single_predicate_constraints in self.parsed_instance.predicate_constraints:
+        if (non_static_predicate == single_predicate_constraints.name):
+          # Positive precondition constraints:
+          self.transition_gates.append(['# Postive preconditions: '])
+          if (len(single_predicate_constraints.pos_pre) != 0):
+            self.constraints_generator(single_predicate_constraints.pos_pre, self.variables_map[non_static_predicate, 'first'])
+            predicate_final_gates.append(self.gates_generator.output_gate)
+          # Negative precondition constraints:
+          self.transition_gates.append(['# Negative preconditions: '])
+          if (len(single_predicate_constraints.neg_pre) != 0):
+            self.constraints_generator(single_predicate_constraints.neg_pre, -self.variables_map[non_static_predicate, 'first'])
+            predicate_final_gates.append(self.gates_generator.output_gate)
+
+          # We need effect gates for frame axiom constraints:
+          effect_gates = []
+
+          # Positive effect constraints:
+          self.transition_gates.append(['# Postive effects: '])
+          if (len(single_predicate_constraints.pos_eff) != 0):
+            self.constraints_generator(single_predicate_constraints.pos_eff, self.variables_map[non_static_predicate, 'second'])
+            predicate_final_gates.append(self.gates_generator.output_gate)
+            effect_gates.append(self.gates_generator.output_gate)
+          # Negative effect constraints:
+          self.transition_gates.append(['# Negative effects: '])
+          if (len(single_predicate_constraints.neg_eff) != 0):
+            self.constraints_generator(single_predicate_constraints.neg_eff, -self.variables_map[non_static_predicate, 'second'])
+            predicate_final_gates.append(self.gates_generator.output_gate)
+            effect_gates.append(self.gates_generator.output_gate)
+
+          assert(len(effect_gates) != 0)
+          # Generating frame axiom, first non-static variable = second non-static variables OR or(effect_gates):
+          self.transition_gates.append(['# Frame axiom equality gate: '])
+          self.gates_generator.single_equality_gate(self.variables_map[non_static_predicate, 'first'], self.variables_map[non_static_predicate, 'second'])
+          frame_gate = self.gates_generator.output_gate
+          self.transition_gates.append(['# or gate for effect gate: '])
+          self.gates_generator.or_gate(effect_gates)
+          effect_or_gate = self.gates_generator.output_gate
+          self.transition_gates.append(['# Frame axiom or gate: '])
+          self.gates_generator.or_gate([frame_gate, effect_or_gate])
+          # Adding frame axiom gate to the predicate final gates:
+          predicate_final_gates.append(self.gates_generator.output_gate)
+
+
+      # Add seperator in encoding for better redability:
+      self.transition_gates.append(["# ------------------------------------------------------------------------"])
+
     # TODO: equality gates, only with parameter variables:
+    for single_predicate_constraints in self.parsed_instance.predicate_constraints:
+      if (single_predicate_constraints.name == '='):
+        assert(len(single_predicate_constraints.pos_pre) == 0 and len(single_predicate_constraints.neg_pre) == 0)
+
+    # Generating 'and' gate for all predicate condition gates:
+    self.transition_gates.append(['# Final predicate condition "and" gate: '])
+    self.gates_generator.and_gate(predicate_final_gates)
+    self.final_transition_gate = self.gates_generator.output_gate
 
   def __init__(self, parsed_instance):
     self.probleminfo = pinfo(parsed_instance)
@@ -119,6 +202,7 @@ class SimpleTransitionFunction:
     self.variables_map = dict()
     self.string_variables_map = ''
     self.transition_gates = []
+    self.final_transition_gate = 0 # Never be zero
 
     if (self.parsed_instance.args.debug >= 1):
       print(self.probleminfo)
