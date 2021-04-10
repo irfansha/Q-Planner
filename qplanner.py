@@ -55,7 +55,7 @@ if __name__ == '__main__':
   print(args)
 
   if args.version:
-    print("Version 0.1")
+    print("Version 0.2")
 
   # Cannot extract a plan with simple bloqqer
   # (must use bloqqer-qdo instead):
