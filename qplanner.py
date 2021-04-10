@@ -29,7 +29,7 @@ if __name__ == '__main__':
   parser.add_argument("--plan_length", type=int,default = 4)
   parser.add_argument("-e", help=textwrap.dedent('''
                                   encoding types:
-                                  UE = Ungrounded Encoding'''),default = 'UE')
+                                  s-UE = Simple Ungrounded Encoding'''),default = 's-UE')
   parser.add_argument("--run", type=int, help=textwrap.dedent('''
                                Three levels of execution:
                                0 = only generate encoding
