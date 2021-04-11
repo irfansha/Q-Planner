@@ -79,10 +79,33 @@ class SimpleEncoding:
       all_vars.extend(step_aux_vars)
       self.tfunc.new_transition_copy(all_vars, self.encoding)
 
-  def generate_initial_gate(self):
+  # Finds object instantiations of a predicate and computes or-of-and gate:
+  def generate_initial_predicate_constraints(self, predicate):
+    list_obj_instances = []
+    for atom in self.tfunc.parsed_instance.parsed_problem.init.as_atoms():
+      if (atom.predicate.name == predicate):
+        # Gates for one proposition:
+        single_instance_gates = []
+        # We generate and gates for each parameter:
+        for i in range(len(atom.subterms)):
+          subterm = atom.subterms[i]
+          cur_variables = self.forall_variables_list[i]
+          # Finding object index:
+          for obj_index in range(len(self.tfunc.parsed_instance.lang.constants())):
+            if (subterm.name == self.tfunc.parsed_instance.lang.constants()[obj_index].name):
+              gate_variables = self.tfunc.generate_binary_format(cur_variables, obj_index)
+              self.gates_generator.and_gate(gate_variables)
+              single_instance_gates.append(self.gates_generator.output_gate)
+              break
+        self.gates_generator.and_gate(single_instance_gates)
+        list_obj_instances.append(self.gates_generator.output_gate)
+    # Finally an or gates for all the instances:
+    self.gates_generator.or_gate(list_obj_instances)
+    return self.gates_generator.output_gate
 
-    # TODO: add static constraints
-    # TODO: add non-static constraints
+  def generate_initial_gate(self):
+    initial_step_output_gates = []
+
     self.encoding.append(["# ------------------------------------------------------------------------"])
     self.encoding.append(['# Initial state: '])
     self.encoding.append(['# Type constraints: '])
@@ -107,8 +130,39 @@ class SimpleEncoding:
       self.gates_generator.or_gate(same_type_gates)
       type_final_gate = self.gates_generator.output_gate
       # Fetching corresponding static variable
+      self.encoding.append(['# iff condition for the type predicate '])
       cur_static_variable = self.static_variables[self.tfunc.probleminfo.static_predicates.index(valid_type.name)]
-      self.gates_generator.if_then_gate(type_final_gate, cur_static_variable)
+      self.gates_generator.single_equality_gate(type_final_gate, cur_static_variable)
+      initial_step_output_gates.append(self.gates_generator.output_gate)
+
+    # Constraints for static variables that are not types:
+    self.encoding.append(['# Non-type static predicate constraints: '])
+    for static_predicate in self.tfunc.probleminfo.static_predicates:
+      type_flag = 0
+      for valid_type in self.tfunc.parsed_instance.valid_types:
+        if (valid_type.name == static_predicate):
+          type_flag = 1
+      # If not a type:
+      if (type_flag == 0):
+        self.encoding.append(['# static predicate: ' + str(static_predicate)])
+        single_predicate_final_gate = self.generate_initial_predicate_constraints(static_predicate)
+        # Fetching corresponding static variable
+        self.encoding.append(['# iff condition for the predicate '])
+        cur_static_variable = self.static_variables[self.tfunc.probleminfo.static_predicates.index(static_predicate)]
+        self.gates_generator.single_equality_gate(single_predicate_final_gate, cur_static_variable)
+        initial_step_output_gates.append(self.gates_generator.output_gate)
+
+    # Constraints for non-static variables:
+    self.encoding.append(['# Non-static predicate constraints: '])
+    for non_static_predicate in self.tfunc.probleminfo.non_static_predicates:
+      self.encoding.append(['# non-static predicate: ' + str(non_static_predicate)])
+      single_predicate_final_gate = self.generate_initial_predicate_constraints(non_static_predicate)
+      # Fetching corresponding non-static variable
+      self.encoding.append(['# iff condition for the predicate '])
+      # We look at the initial state, so 0th index predicates:
+      cur_nonstatic_variable = self.non_static_variables[0][self.tfunc.probleminfo.non_static_predicates.index(non_static_predicate)]
+      self.gates_generator.single_equality_gate(single_predicate_final_gate, cur_nonstatic_variable)
+      initial_step_output_gates.append(self.gates_generator.output_gate)
 
 
   def __init__(self, tfunc):
