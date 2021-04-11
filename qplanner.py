@@ -39,7 +39,8 @@ if __name__ == '__main__':
   parser.add_argument("--encoding_out", help="output encoding file",default = 'intermediate_files/encoding')
   parser.add_argument("--solver", type=int, help=textwrap.dedent('''
                                        Solver:
-                                       1 = caqe'''),default = 1)
+                                       1 = quabs
+                                       2 = caqe'''),default = 1)
   parser.add_argument("--debug", type=int, help="[0/1], default 0" ,default = 0)
   parser.add_argument("--run_tests", type=int, help="[0/1], default 0",default = 0)
   parser.add_argument("--preprocessing", type = int, help=textwrap.dedent('''
