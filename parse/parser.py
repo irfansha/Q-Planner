@@ -18,6 +18,10 @@ class Parse:
     self.parsed_problem = reader.parse_instance(problem_path)
     # In tarski language is seperated from problem itself:
     self.lang = self.parsed_problem.language
+
+    # Asserting the goal is not already satisfied:
+    assert(self.parsed_problem.init[self.parsed_problem.goal] == False)
+
     self.valid_types = []
     self.valid_actions = []
 
