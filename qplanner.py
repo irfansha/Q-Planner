@@ -15,6 +15,7 @@ from parse.parser import Parse as ps
 import testing.tests as ts
 import q_encodings.encoder as ge
 from transition_function.simple_transition_function import SimpleTransitionFunction as stf
+import run.run_solver as rs
 
 
 # Main:
@@ -41,6 +42,7 @@ if __name__ == '__main__':
                                        Solver:
                                        1 = quabs
                                        2 = caqe'''),default = 1)
+  parser.add_argument("--solver_out", help="solver output file",default = 'intermediate_files/solver_output')
   parser.add_argument("--debug", type=int, help="[0/1], default 0" ,default = 0)
   parser.add_argument("--run_tests", type=int, help="[0/1], default 0",default = 0)
   parser.add_argument("--preprocessing", type = int, help=textwrap.dedent('''
@@ -48,7 +50,8 @@ if __name__ == '__main__':
                                        0 = off
                                        1 = bloqqer (version 37)
                                        2 = bloqqer-qdo (version 37)'''),default = 0)
-  parser.add_argument("--preprocessing_time_limit", type=int, help="Time limit in seconds, default 900 seconds",default = 900)
+  parser.add_argument("--time_limit", type=int, help="Solving time limit in seconds, default 900 seconds",default = 1800)
+  parser.add_argument("--preprocessing_time_limit", type=int, help="Preprocessing time limit in seconds, default 900 seconds",default = 900)
   args = parser.parse_args()
 
 
@@ -89,3 +92,6 @@ if __name__ == '__main__':
   # TODO: Add new encoding generator module, and a new simple encoding module
   ge.generate_encoding(tfunc)
   # TODO: Add new strongly constrained encoding module
+
+  if (args.run >= 1):
+    rs.run_single_solver(args)
