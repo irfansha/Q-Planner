@@ -96,9 +96,12 @@ class SimpleTransitionFunction:
     # Only one of the action condition needs to be true:
     self.transition_gates.append(['# Or gate for condition action gates of the predicate'])
     self.gates_generator.or_gate(condition_gates)
+    # For frame axiom we need the condition gate:
+    if_condition_gate = self.gates_generator.output_gate
     # Generate if then gate for the predicate:
     self.transition_gates.append(['# If then gate for the predicate:'])
     self.gates_generator.if_then_gate(self.gates_generator.output_gate, predicate_variable)
+    return if_condition_gate
 
 
   # Takes a list of clause variables and maps to a integer value:
@@ -166,15 +169,15 @@ class SimpleTransitionFunction:
           # Positive effect constraints:
           self.transition_gates.append(['# Postive effects: '])
           if (len(single_predicate_constraints.pos_eff) != 0):
-            self.constraints_generator(single_predicate_constraints.pos_eff, self.variables_map[non_static_predicate, 'second'])
+            if_condition_gate = self.constraints_generator(single_predicate_constraints.pos_eff, self.variables_map[non_static_predicate, 'second'])
+            effect_gates.append(if_condition_gate)
             predicate_final_gates.append(self.gates_generator.output_gate)
-            effect_gates.append(self.gates_generator.output_gate)
           # Negative effect constraints:
           self.transition_gates.append(['# Negative effects: '])
           if (len(single_predicate_constraints.neg_eff) != 0):
-            self.constraints_generator(single_predicate_constraints.neg_eff, -self.variables_map[non_static_predicate, 'second'])
+            if_condition_gate = self.constraints_generator(single_predicate_constraints.neg_eff, -self.variables_map[non_static_predicate, 'second'])
+            effect_gates.append(if_condition_gate)
             predicate_final_gates.append(self.gates_generator.output_gate)
-            effect_gates.append(self.gates_generator.output_gate)
 
           assert(len(effect_gates) != 0)
           # Generating frame axiom, first non-static variable = second non-static variables OR or(effect_gates):
