@@ -103,6 +103,7 @@ class SimpleEncoding:
     self.gates_generator.or_gate(list_obj_instances)
     return self.gates_generator.output_gate
 
+  # TODO: Testing is needed
   def generate_initial_gate(self):
     initial_step_output_gates = []
 
@@ -164,6 +165,10 @@ class SimpleEncoding:
       self.gates_generator.single_equality_gate(single_predicate_final_gate, cur_nonstatic_variable)
       initial_step_output_gates.append(self.gates_generator.output_gate)
 
+    # Final and gates of all constraints:
+    self.encoding.append(['# Final inital output gate:'])
+    self.gates_generator.and_gate(initial_step_output_gates)
+    self.initial_output_gate = self.gates_generator.output_gate
 
   def __init__(self, tfunc):
     self.tfunc = tfunc
