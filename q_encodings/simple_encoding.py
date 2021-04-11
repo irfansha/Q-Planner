@@ -1,6 +1,7 @@
 # Irfansha Shaik, 10.04.2021, Aarhus.
 
 from utils.variables_dispatcher import VarDispatcher as vd
+from utils.gates import GatesGen as gg
 
 class SimpleEncoding:
 
@@ -78,6 +79,38 @@ class SimpleEncoding:
       all_vars.extend(step_aux_vars)
       self.tfunc.new_transition_copy(all_vars, self.encoding)
 
+  def generate_initial_gate(self):
+
+    # TODO: add static constraints
+    # TODO: add non-static constraints
+    self.encoding.append(["# ------------------------------------------------------------------------"])
+    self.encoding.append(['# Initial state: '])
+    self.encoding.append(['# Type constraints: '])
+    for valid_type in self.tfunc.parsed_instance.valid_types:
+      # We consider only static predicate types:
+      if valid_type.name not in self.tfunc.probleminfo.static_predicates:
+        continue
+      self.encoding.append(['# Type: ' + str(valid_type.name)])
+      same_type_gates = []
+      cur_type_objects = list(self.tfunc.parsed_instance.lang.get(valid_type.name).domain())
+      for obj in cur_type_objects:
+        # Since variables always have one parameter, we choose first set of forall variables:
+        cur_variables = self.forall_variables_list[0]
+        # Finding the position of object needed:
+        for obj_index in range(len(self.tfunc.parsed_instance.lang.constants())):
+          if (obj.name == self.tfunc.parsed_instance.lang.constants()[obj_index].name):
+            gate_variables = self.tfunc.generate_binary_format(cur_variables, obj_index)
+            self.gates_generator.and_gate(gate_variables)
+            same_type_gates.append(self.gates_generator.output_gate)
+            break
+      # If any of the combination is true then, the predicate is true:
+      self.gates_generator.or_gate(same_type_gates)
+      type_final_gate = self.gates_generator.output_gate
+      # Fetching corresponding static variable
+      cur_static_variable = self.static_variables[self.tfunc.probleminfo.static_predicates.index(valid_type.name)]
+      self.gates_generator.if_then_gate(type_final_gate, cur_static_variable)
+
+
   def __init__(self, tfunc):
     self.tfunc = tfunc
     self.encoding_variables = vd()
@@ -128,6 +161,9 @@ class SimpleEncoding:
 
     #print(self.transition_step_output_gates)
 
+    self.gates_generator = gg(self.encoding_variables, self.encoding)
+
     # TODO: generate gates for initial state
+    self.generate_initial_gate()
     # TODO: generate gates for goal state
     # TODO: generate restricted constraints for forall varaibles based on types
