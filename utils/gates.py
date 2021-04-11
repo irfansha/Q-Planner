@@ -16,7 +16,7 @@ class GatesGen:
       self.output_gate = self.gate_reuse_map[key]
       return
     temp_gate = ['or', self.next_gate, current_list]
-    self.transition_gates.append(temp_gate)
+    self.gates.append(temp_gate)
     self.output_gate = self.next_gate
     self.next_gate = self.vd.get_single_var()
     self.gate_reuse_map[key] = self.output_gate
@@ -29,7 +29,7 @@ class GatesGen:
       self.output_gate = self.gate_reuse_map[key]
       return
     temp_gate = ['and', self.next_gate, current_list]
-    self.transition_gates.append(temp_gate)
+    self.gates.append(temp_gate)
     self.output_gate = self.next_gate
     self.next_gate = self.vd.get_single_var()
     self.gate_reuse_map[key] = self.output_gate
@@ -82,10 +82,10 @@ class GatesGen:
     self.gate_reuse_map[key] = self.output_gate
 
 
-  def __init__(self, vd, transition_gates):
+  def __init__(self, vd, gates):
     self.vd = vd
     self.output_gate = 0 # output gate will next be 0
     self.next_gate = self.vd.get_single_var()
     self.gate_reuse_map = dict()
-    self.transition_gates = transition_gates
+    self.gates = gates
 
