@@ -10,6 +10,7 @@ class GatesGen:
 
   # Takes list and current list of gates
   # generates OR gate:
+  # TODO: if single length we can return with out gate:
   def or_gate(self, current_list):
     key = ('or', tuple(current_list))
     if key in self.gate_reuse_map:
@@ -23,6 +24,7 @@ class GatesGen:
 
   # Takes list and current list of gates
   # generates AND gate:
+  # TODO: if single length we can return with out gate:
   def and_gate(self, current_list):
     key = ('and', tuple(current_list))
     if key in self.gate_reuse_map:
