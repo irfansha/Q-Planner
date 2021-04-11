@@ -2,6 +2,7 @@
 
 from utils.variables_dispatcher import VarDispatcher as vd
 from utils.gates import GatesGen as gg
+from tarski.syntax import formulas as fr
 
 class SimpleEncoding:
 
@@ -170,6 +171,67 @@ class SimpleEncoding:
     self.gates_generator.and_gate(initial_step_output_gates)
     self.initial_output_gate = self.gates_generator.output_gate
 
+  # Finds object instantiations of a predicate and computes or-of-and gate:
+  # TODO: Negative goals to be handled:
+  def generate_goal_predicate_constraints(self, predicate):
+    list_obj_instances = []
+    if (fr.is_atom(self.tfunc.parsed_instance.parsed_problem.goal)):
+      list_subformulas = [self.tfunc.parsed_instance.parsed_problem.goal]
+    else:
+      list_subformulas = self.tfunc.parsed_instance.parsed_problem.goal.subformulas
+    for atom in list_subformulas:
+      # We do not handle negative goals yet:
+      assert(fr.is_neg(atom) == False)
+      if (atom.predicate.name == predicate):
+        # Gates for one proposition:
+        single_instance_gates = []
+        # We generate and gates for each parameter:
+        for i in range(len(atom.subterms)):
+          subterm = atom.subterms[i]
+          cur_variables = self.forall_variables_list[i]
+          # Finding object index:
+          for obj_index in range(len(self.tfunc.parsed_instance.lang.constants())):
+            if (subterm.name == self.tfunc.parsed_instance.lang.constants()[obj_index].name):
+              gate_variables = self.tfunc.generate_binary_format(cur_variables, obj_index)
+              self.gates_generator.and_gate(gate_variables)
+              single_instance_gates.append(self.gates_generator.output_gate)
+              break
+        # We only generate of some instantiation occurs:
+        if (len(single_instance_gates) != 0):
+          self.gates_generator.and_gate(single_instance_gates)
+          list_obj_instances.append(self.gates_generator.output_gate)
+    if (len(list_obj_instances) != 0):
+      # Finally an or gates for all the instances:
+      self.gates_generator.or_gate(list_obj_instances)
+      return self.gates_generator.output_gate
+    else:
+      return 0
+
+  # Generating goal constraints:
+  def generate_goal_gate(self):
+    goal_step_output_gates = []
+    self.encoding.append(["# ------------------------------------------------------------------------"])
+    self.encoding.append(['# Goal state: '])
+    # Only non-static predicates are considered:
+    # WARNING: we might be missig something, test here if something is wrong
+    self.encoding.append(['# Non-static predicate constraints: '])
+    for non_static_predicate in self.tfunc.probleminfo.non_static_predicates:
+      self.encoding.append(['# non-static predicate: ' + str(non_static_predicate)])
+      single_predicate_final_gate = self.generate_goal_predicate_constraints(non_static_predicate)
+      if (single_predicate_final_gate == 0):
+        continue
+      # Fetching corresponding non-static variable
+      self.encoding.append(['# if then condition for the predicate '])
+      # We look at the goal state, so 0th index predicates:
+      cur_nonstatic_variable = self.non_static_variables[self.tfunc.parsed_instance.args.plan_length][self.tfunc.probleminfo.non_static_predicates.index(non_static_predicate)]
+      self.gates_generator.if_then_gate(single_predicate_final_gate, cur_nonstatic_variable)
+      goal_step_output_gates.append(self.gates_generator.output_gate)
+
+    # Final and gates of all constraints:
+    self.encoding.append(['# Final goal output gate:'])
+    self.gates_generator.and_gate(goal_step_output_gates)
+    self.goal_output_gate = self.gates_generator.output_gate
+
   def __init__(self, tfunc):
     self.tfunc = tfunc
     self.encoding_variables = vd()
@@ -222,7 +284,7 @@ class SimpleEncoding:
 
     self.gates_generator = gg(self.encoding_variables, self.encoding)
 
-    # TODO: generate gates for initial state
     self.generate_initial_gate()
-    # TODO: generate gates for goal state
+
+    self.generate_goal_gate()
     # TODO: generate restricted constraints for forall varaibles based on types
