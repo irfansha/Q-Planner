@@ -232,6 +232,18 @@ class SimpleEncoding:
     self.gates_generator.and_gate(goal_step_output_gates)
     self.goal_output_gate = self.gates_generator.output_gate
 
+  # Final output gate is an and-gate with inital, goal and transition gates:
+  def generate_final_gate(self):
+    final_gates_list = []
+    final_gates_list.append(self.initial_output_gate)
+    final_gates_list.append(self.goal_output_gate)
+    final_gates_list.extend(self.transition_step_output_gates)
+    self.encoding.append(["# ------------------------------------------------------------------------"])
+    self.encoding.append(['# Final output gate:'])
+    self.gates_generator.and_gate(final_gates_list)
+    self.final_output_gate = self.gates_generator.output_gate
+    self.encoding.append(["# ------------------------------------------------------------------------"])
+
   def __init__(self, tfunc):
     self.tfunc = tfunc
     self.encoding_variables = vd()
@@ -288,3 +300,5 @@ class SimpleEncoding:
 
     self.generate_goal_gate()
     # TODO: generate restricted constraints for forall varaibles based on types
+
+    self.generate_final_gate()
