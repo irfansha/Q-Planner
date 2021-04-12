@@ -16,7 +16,7 @@ def run_single_solver(encoding):
     sol_map = instance.sol_map
 
   # Checking existence of plan:
-  if instance.sat:
+  if instance.sat == 1:
     print("Plan found")
   else:
     print("Plan not found")
