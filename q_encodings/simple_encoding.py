@@ -218,6 +218,7 @@ class SimpleEncoding:
     for non_static_predicate in self.tfunc.probleminfo.non_static_predicates:
       self.encoding.append(['# non-static predicate: ' + str(non_static_predicate)])
       single_predicate_final_gate = self.generate_goal_predicate_constraints(non_static_predicate)
+      # TODO: Handle predicates with zero arities:
       if (single_predicate_final_gate == 0):
         continue
       # Fetching corresponding non-static variable
