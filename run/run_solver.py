@@ -18,6 +18,9 @@ def run_single_solver(encoding):
   # Checking existence of plan:
   if instance.sat == 1:
     print("Plan found")
+  elif instance.sat == -1:
+    print("====> ERROR from solver <====")
+    return
   else:
     print("Plan not found")
     return
