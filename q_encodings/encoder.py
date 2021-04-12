@@ -11,3 +11,6 @@ def generate_encoding(tfunc):
   encoding.print_encoding_tofile(tfunc.parsed_instance.args.encoding_out)
 
   # TODO: change the encoding to qdimacs using tools
+
+  # Returning encoding for plan extraction:
+  return encoding
