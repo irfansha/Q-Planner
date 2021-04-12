@@ -232,6 +232,16 @@ class SimpleEncoding:
     self.gates_generator.and_gate(goal_step_output_gates)
     self.goal_output_gate = self.gates_generator.output_gate
 
+  def generate_restricted_forall_constraints(self):
+    # TODO: add constraints from non-typed static predicates:
+    for predicate in self.tfunc.probleminfo.static_predicates:
+      print(predicate)
+
+    # TODO: add constraints from non-static predicates:
+    for predicate in self.tfunc.probleminfo.non_static_predicates:
+      print(predicate)
+
+
   # Final output gate is an and-gate with inital, goal and transition gates:
   def generate_final_gate(self):
     final_gates_list = []
@@ -299,6 +309,7 @@ class SimpleEncoding:
     self.generate_initial_gate()
 
     self.generate_goal_gate()
-    # TODO: generate restricted constraints for forall varaibles based on types
+
+    #self.generate_restricted_forall_constraints()
 
     self.generate_final_gate()
