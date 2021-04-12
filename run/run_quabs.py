@@ -27,7 +27,7 @@ class RunQuabs():
         if int(literal) > 0:
           self.sol_map[int(literal)] = 1
         else:
-          self.sol_map[-int(literal)] = -1
+          self.sol_map[-int(literal)] = 0
     else:
       self.sat = 0
 
