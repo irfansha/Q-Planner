@@ -7,6 +7,10 @@ TODOS:
   3. We add psuedo-grounded constraints for restricting search space for action variables
      based on psuedo-grounding of static-predicates.
   4. We also add constraints for forall variables based on predicate types to restrict search space.
+  5. Not restricted to static-predicates, we can also add constraints from Initial and
+     Goal states directly pruning away first and last actions.
+  6. Constraints between consecutive action steps can be added based on preconditions
+     and effects something similar to mutex-op.
 '''
 
 import os
