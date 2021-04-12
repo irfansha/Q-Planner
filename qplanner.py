@@ -90,8 +90,8 @@ if __name__ == '__main__':
     print(tfunc)
 
   # TODO: Add new encoding generator module, and a new simple encoding module
-  ge.generate_encoding(tfunc)
+  encoding = ge.generate_encoding(tfunc)
   # TODO: Add new strongly constrained encoding module
 
   if (args.run >= 1):
-    rs.run_single_solver(args)
+    rs.run_single_solver(encoding)
