@@ -42,7 +42,7 @@ if __name__ == '__main__':
   parser.add_argument("--solver", type=int, help=textwrap.dedent('''
                                        Solver:
                                        1 = quabs
-                                       2 = caqe'''),default = 1)
+                                       2 = caqe'''),default = 2)
   parser.add_argument("--solver_out", help="solver output file",default = 'intermediate_files/solver_output')
   parser.add_argument("--debug", type=int, help="[0/1], default 0" ,default = 0)
   parser.add_argument("--run_tests", type=int, help="[0/1], default 0",default = 0)
