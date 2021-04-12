@@ -18,6 +18,8 @@ class ExtractPlan():
         action_name = encoding.tfunc.probleminfo.valid_actions[action_index]
       object_list = []
       # Generating parameter variables based on arity of current action:
+      if (action_name == 'noop'):
+        continue
       cur_action = encoding.tfunc.parsed_instance.parsed_problem.get_action(action_name)
       for j in range(len(cur_action.parameters)):
         object_name_string = ''
