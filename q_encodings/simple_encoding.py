@@ -233,14 +233,25 @@ class SimpleEncoding:
     self.gates_generator.and_gate(goal_step_output_gates)
     self.goal_output_gate = self.gates_generator.output_gate
 
-  def generate_restricted_forall_constraints(self):
-    # TODO: add constraints from non-typed static predicates:
-    for predicate in self.tfunc.probleminfo.static_predicates:
-      print(predicate)
 
-    # TODO: add constraints from non-static predicates:
-    for predicate in self.tfunc.probleminfo.non_static_predicates:
-      print(predicate)
+  def generate_simple_restricted_forall_constraints(self):
+
+    self.encoding.append(["# ------------------------------------------------------------------------"])
+    self.encoding.append(['# Conditional forall constraints: '])
+
+    # All conditional output gates:
+    all_conditional_output_gates = []
+
+    for cur_variables in self.forall_variables_list:
+      for i in range(self.tfunc.probleminfo.num_objects, self.tfunc.probleminfo.num_possible_parameter_values):
+        cur_invalid_forall_vars_list = self.tfunc.generate_binary_format(cur_variables, i)
+        self.gates_generator.and_gate(cur_invalid_forall_vars_list)
+        all_conditional_output_gates.append(self.gates_generator.output_gate)
+
+    self.encoding.append(['# Final conditional gate: '])
+    self.gates_generator.or_gate(all_conditional_output_gates)
+    self.conditional_final_output_gate = -self.gates_generator.output_gate
+    self.encoding.append(["# ------------------------------------------------------------------------"])
 
 
   # Final output gate is an and-gate with inital, goal and transition gates:
@@ -251,7 +262,12 @@ class SimpleEncoding:
     final_gates_list.extend(self.transition_step_output_gates)
     self.encoding.append(["# ------------------------------------------------------------------------"])
     self.encoding.append(['# Final output gate:'])
+    self.encoding.append(['# And gate for initial, output and transition functions:'])
     self.gates_generator.and_gate(final_gates_list)
+    # Restricting forall seems expensive, making it optional:
+    if (self.tfunc.parsed_instance.args.restricted_forall == 1):
+      self.encoding.append(['# Conditional gate for forall restriction:'])
+      self.gates_generator.if_then_gate(self.conditional_final_output_gate, self.gates_generator.output_gate)
     self.final_output_gate = self.gates_generator.output_gate
     self.encoding.append(["# ------------------------------------------------------------------------"])
 
@@ -263,6 +279,7 @@ class SimpleEncoding:
     self.initial_output_gate = 0 # initial output gate can never be 0
     self.goal_output_gate = 0 # goal output gate can never be 0
     self.transition_step_output_gates = []
+    self.conditional_final_output_gate = 0 # Can never be 0
     self.final_output_gate = 0 # Can never be 0
 
 
@@ -311,6 +328,8 @@ class SimpleEncoding:
 
     self.generate_goal_gate()
 
-    #self.generate_restricted_forall_constraints()
+    # Restricting forall seems expensive, making it optional:
+    if (self.tfunc.parsed_instance.args.restricted_forall == 1):
+      self.generate_simple_restricted_forall_constraints()
 
     self.generate_final_gate()

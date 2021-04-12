@@ -50,6 +50,7 @@ if __name__ == '__main__':
   parser.add_argument("--solver_out", help="solver output file",default = 'intermediate_files/solver_output')
   parser.add_argument("--debug", type=int, help="[0/1], default 0" ,default = 0)
   parser.add_argument("--run_tests", type=int, help="[0/1], default 0",default = 0)
+  parser.add_argument("--restricted_forall", type=int, help=" Additional clause to restrict forall branches [0/1], default 0",default = 0)
   parser.add_argument("--preprocessing", type = int, help=textwrap.dedent('''
                                        Preprocessing:
                                        0 = off
