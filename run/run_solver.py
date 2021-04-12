@@ -3,6 +3,7 @@
 from run.run_quabs import RunQuabs as rq
 from run.run_caqe import RunCaqe as rc
 from run.plan_extraction import ExtractPlan as ep
+import testing.val_testing as vt
 
 def run_single_solver(encoding):
   # For ease of access declaring locally:
@@ -24,3 +25,6 @@ def run_single_solver(encoding):
   # Extracting plan if run >=2:
   if (args.run >= 2):
     ep(encoding, sol_map)
+
+  if (args.val_testing == 1):
+    vt.test_plan_with_val(args)
