@@ -11,6 +11,8 @@ TODOS:
      Goal states directly pruning away first and last actions.
   6. Constraints between consecutive action steps can be added based on preconditions
      and effects something similar to mutex-op.
+  7. Seems direct mutex operators are available, need to check if useful.
+  8. Invariants seem useful (intuitively), can be added both at existence level and for universal layer.
 '''
 
 import os
@@ -50,7 +52,7 @@ if __name__ == '__main__':
   parser.add_argument("--solver_out", help="solver output file",default = 'intermediate_files/solver_output')
   parser.add_argument("--debug", type=int, help="[0/1], default 0" ,default = 0)
   parser.add_argument("--run_tests", type=int, help="[0/1], default 0",default = 0)
-  parser.add_argument("--restricted_forall", type=int, help=" Additional clause to restrict forall branches [0/1], default 0",default = 0)
+  parser.add_argument("--restricted_forall", type=int, help=" Additional clause to restrict forall branches [0/1/2], default 1",default = 1)
   parser.add_argument("--preprocessing", type = int, help=textwrap.dedent('''
                                        Preprocessing:
                                        0 = off
