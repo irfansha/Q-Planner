@@ -13,6 +13,7 @@ TODOS:
      and effects something similar to mutex-op.
   7. Seems direct mutex operators are available, need to check if useful.
   8. Invariants seem useful (intuitively), can be added both at existence level and for universal layer.
+  9. conditional constraints on forall vars seem to work, perhaps simpler constraints might work best.
 '''
 
 import os
