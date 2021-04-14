@@ -172,22 +172,46 @@ class SimpleEncoding:
     self.initial_output_gate = self.gates_generator.output_gate
 
   # Finds object instantiations of a predicate and computes or-of-and gate:
-  # TODO: Negative goals to be handled:
   def generate_goal_predicate_constraints(self, predicate):
-    list_obj_instances = []
+    # We generate gates for positive and negative clauses separately,
+    pos_final_gate = 0
+    neg_final_gate = 0
+    zero_arity_predicate = 0
+
+    list_obj_instances_pos = []
+    list_obj_instances_neg = []
     if (fr.is_atom(self.tfunc.parsed_instance.parsed_problem.goal)):
       list_subformulas = [self.tfunc.parsed_instance.parsed_problem.goal]
     else:
       list_subformulas = self.tfunc.parsed_instance.parsed_problem.goal.subformulas
     for atom in list_subformulas:
-      # We do not handle negative goals yet:
-      assert(fr.is_neg(atom) == False)
-      if (atom.predicate.name == predicate):
+      # If it is negative atom, then we need to consider as
+      # compund formula:
+      if(fr.is_neg(atom)):
+        # Asserting negation connective:
+        assert(atom.connective == fr.Connective.Not)
+        # Asserting single atom:
+        assert(len(atom.subformulas) == 1)
+        cur_atom = atom.subformulas[0]
+      else:
+        # If not negative, we do not change:
+        cur_atom = atom
+      if (cur_atom.predicate.name == predicate):
+        # If it a zero arity predicate, then either positive or negative must
+        # be present so returning directly if found:
+        if (len(cur_atom.subterms) == 0):
+          # again checking if positive or negative:
+          if(fr.is_neg(atom)):
+            zero_arity_predicate = -1
+          else:
+            zero_arity_predicate = 1
+          # We do not look further:
+          break
         # Gates for one proposition:
         single_instance_gates = []
         # We generate and gates for each parameter:
-        for i in range(len(atom.subterms)):
-          subterm = atom.subterms[i]
+        for i in range(len(cur_atom.subterms)):
+          subterm = cur_atom.subterms[i]
           cur_variables = self.forall_variables_list[i]
           # Finding object index:
           for obj_index in range(len(self.tfunc.parsed_instance.lang.constants())):
@@ -199,13 +223,24 @@ class SimpleEncoding:
         # We only generate of some instantiation occurs:
         if (len(single_instance_gates) != 0):
           self.gates_generator.and_gate(single_instance_gates)
-          list_obj_instances.append(self.gates_generator.output_gate)
-    if (len(list_obj_instances) != 0):
-      # Finally an or gates for all the instances:
-      self.gates_generator.or_gate(list_obj_instances)
-      return self.gates_generator.output_gate
-    else:
-      return 0
+          # Appending to the right list:
+          if (fr.is_neg(atom)):
+            list_obj_instances_neg.append(self.gates_generator.output_gate)
+          else:
+            list_obj_instances_pos.append(self.gates_generator.output_gate)
+
+
+    if (len(list_obj_instances_pos) != 0):
+      # Finally an or gate for all the pos instances:
+      self.encoding.append(['# Or gate for pos instances:'])
+      self.gates_generator.or_gate(list_obj_instances_pos)
+      pos_final_gate = self.gates_generator.output_gate
+    if (len(list_obj_instances_neg) != 0):
+      # Finally an or gates for all the neg instances:
+      self.encoding.append(['# Or gate for neg instances:'])
+      self.gates_generator.or_gate(list_obj_instances_neg)
+      neg_final_gate = self.gates_generator.output_gate
+    return [pos_final_gate, neg_final_gate, zero_arity_predicate]
 
   # Generating goal constraints:
   def generate_goal_gate(self):
@@ -217,16 +252,32 @@ class SimpleEncoding:
     self.encoding.append(['# Non-static predicate constraints: '])
     for non_static_predicate in self.tfunc.probleminfo.non_static_predicates:
       self.encoding.append(['# non-static predicate: ' + str(non_static_predicate)])
-      single_predicate_final_gate = self.generate_goal_predicate_constraints(non_static_predicate)
-      # TODO: Handle predicates with zero arities:
-      if (single_predicate_final_gate == 0):
-        continue
+      [pos_gate, neg_gate, zero_var] = self.generate_goal_predicate_constraints(non_static_predicate)
+
       # Fetching corresponding non-static variable
-      self.encoding.append(['# if then condition for the predicate '])
-      # We look at the goal state, so 0th index predicates:
+      # We look at the goal state, so plan length index predicates:
       cur_nonstatic_variable = self.non_static_variables[self.tfunc.parsed_instance.args.plan_length][self.tfunc.probleminfo.non_static_predicates.index(non_static_predicate)]
-      self.gates_generator.if_then_gate(single_predicate_final_gate, cur_nonstatic_variable)
-      goal_step_output_gates.append(self.gates_generator.output_gate)
+
+      if (pos_gate != 0):
+        # positive if condition:
+        self.encoding.append(['# if then condition for the pos predicate '])
+        self.gates_generator.if_then_gate(pos_gate, cur_nonstatic_variable)
+        goal_step_output_gates.append(self.gates_generator.output_gate)
+      if (neg_gate != 0):
+        # negative if condition:
+        self.encoding.append(['# if then condition for the neg predicate '])
+        self.gates_generator.if_then_gate(pos_gate, -cur_nonstatic_variable)
+        goal_step_output_gates.append(self.gates_generator.output_gate)
+
+      if (zero_var == 1):
+        # if positive zero arity predicate condition:
+        self.encoding.append(['# positive zero airty predicate '])
+        goal_step_output_gates.append(cur_nonstatic_variable)
+      if (zero_var == -1):
+        # if negative zero arity predicate condition:
+        self.encoding.append(['# negative zero airty predicate '])
+        goal_step_output_gates.append(-cur_nonstatic_variable)
+
 
     # Final and gates of all constraints:
     self.encoding.append(['# Final goal output gate:'])
