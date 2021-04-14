@@ -26,7 +26,7 @@ class SimpleEncoding:
     first_layer_variables = []
     self.quantifier_block.append(['# Action and parameter variables :'])
     for i in range(self.tfunc.parsed_instance.args.plan_length):
-      self.quantifier_block.append(['# Time step 1 :'])
+      self.quantifier_block.append(['# Time step ' + str(i) + ' :'])
       self.quantifier_block.append(['# ' + str(self.action_variables[i])])
       self.quantifier_block.append(['# ' + str(self.parameter_variables[i])])
       first_layer_variables.extend(self.action_variables[i])
@@ -266,7 +266,7 @@ class SimpleEncoding:
       if (neg_gate != 0):
         # negative if condition:
         self.encoding.append(['# if then condition for the neg predicate '])
-        self.gates_generator.if_then_gate(pos_gate, -cur_nonstatic_variable)
+        self.gates_generator.if_then_gate(neg_gate, -cur_nonstatic_variable)
         goal_step_output_gates.append(self.gates_generator.output_gate)
 
       if (zero_var == 1):
