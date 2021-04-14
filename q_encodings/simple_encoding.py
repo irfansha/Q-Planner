@@ -233,6 +233,111 @@ class SimpleEncoding:
     self.gates_generator.and_gate(goal_step_output_gates)
     self.goal_output_gate = self.gates_generator.output_gate
 
+  # TODO: We might be over-engineering, might work well for strongly constrained
+  # transition function:
+  def generate_restricted_forall_constraints(self):
+
+    self.encoding.append(["# ------------------------------------------------------------------------"])
+    self.encoding.append(['# Conditional forall constraints: '])
+
+    # All conditional output gates:
+    all_conditional_output_gates = []
+
+    # Generating an object type index, where object type is the key
+    # and all the object indexs of that types is the value list:
+    obj_type_index = dict()
+
+    # For each type we look at the set of objects with same type and add
+    # it into out dictionary as indexes:
+    for tp in self.tfunc.parsed_instance.lang.sorts:
+      obj_list = list(self.tfunc.parsed_instance.lang.get(tp.name).domain())
+      obj_index_list = []
+      for obj in obj_list:
+        for i in range(len(self.tfunc.parsed_instance.lang.constants())):
+          if (obj.name == self.tfunc.parsed_instance.lang.constants()[i].name):
+            obj_index_list.append(i)
+            break
+      obj_index_list.sort()
+      obj_type_index[tp] = obj_index_list
+
+    # we do not want to iterate through again:
+    local_valid_type_names_list = []
+    # Since variables for types always have one parameter,
+    # we choose first set of forall variables:
+    cur_variables = self.forall_variables_list[0]
+    # Constraint for types:
+    for valid_type in self.tfunc.parsed_instance.valid_types:
+      single_type_output_gates = []
+      # We consider only static predicate types:
+      local_valid_type_names_list.append(valid_type.name)
+      # gathering all the types for or gate:
+      cur_gates = []
+      # if there are no objects, we ignore:
+      if(len(obj_type_index[valid_type]) == 0):
+        continue
+      # Generating conditional clauses:
+      self.encoding.append(['# Conditional for type ' + str(valid_type.name) + ': '])
+      for valid_index in obj_type_index[valid_type]:
+        gate_variables = self.tfunc.generate_binary_format(cur_variables, valid_index)
+        self.gates_generator.and_gate(gate_variables)
+        cur_gates.append(self.gates_generator.output_gate)
+      self.encoding.append(['# Overall or gate for all possiblities: '])
+      self.gates_generator.or_gate(cur_gates)
+      single_type_output_gates.append(self.gates_generator.output_gate)
+      # We need to restrict the other position forall variables for speed up:
+      for i in range(1, self.tfunc.probleminfo.max_predicate_parameters):
+        temp_forall_variables = self.forall_variables_list[i]
+        # We go with first object by default, nothing special:
+        self.encoding.append(['# restricted object clause: '])
+        gate_variables = self.tfunc.generate_binary_format(temp_forall_variables, 0)
+        self.gates_generator.and_gate(gate_variables)
+        single_type_output_gates.append(self.gates_generator.output_gate)
+      self.encoding.append(['# And gate for all parameters of single type: '])
+      self.gates_generator.and_gate(single_type_output_gates)
+      all_conditional_output_gates.append(self.gates_generator.output_gate)
+    #print(all_conditional_output_gates)
+
+    # Perhaps easier to just go through all the predicates at once:
+    all_valid_predicates = []
+    all_valid_predicates.extend(self.tfunc.probleminfo.static_predicates)
+    all_valid_predicates.extend(self.tfunc.probleminfo.non_static_predicates)
+
+    # Adding constraints for the forall variables based on predicates:
+    for predicate in all_valid_predicates:
+      if (predicate not in local_valid_type_names_list):
+        self.encoding.append(['# Conditional for predicate ' + str(predicate) + ': '])
+        cur_parameter_types = self.tfunc.parsed_instance.lang.get(predicate).sort
+        single_predicate_output_gates = []
+        for i in range(len(cur_parameter_types)):
+          # depending on the position we fetch forall variables:
+          cur_variables = self.forall_variables_list[i]
+          cur_gates = []
+          # generating or gate for all the possible objects of specified type:
+          valid_objects_cur_type = obj_type_index[cur_parameter_types[i]]
+          for valid_index in valid_objects_cur_type:
+            gate_variables = self.tfunc.generate_binary_format(cur_variables, valid_index)
+            self.gates_generator.and_gate(gate_variables)
+            cur_gates.append(self.gates_generator.output_gate)
+          self.encoding.append(['# Overall or gate for all possiblities for ' + str(i) + 'th parameter:'])
+          self.gates_generator.or_gate(cur_gates)
+          single_predicate_output_gates.append(self.gates_generator.output_gate)
+        # We set rest of the parameters to 0 objects:
+        for i in range(len(cur_parameter_types), self.tfunc.probleminfo.max_predicate_parameters):
+          temp_forall_variables = self.forall_variables_list[i]
+          # We go with first object by default, nothing special:
+          self.encoding.append(['# restricted object clause: '])
+          gate_variables = self.tfunc.generate_binary_format(temp_forall_variables, 0)
+          self.gates_generator.and_gate(gate_variables)
+          single_predicate_output_gates.append(self.gates_generator.output_gate)
+        self.encoding.append(['# And gate for all parameter possibilities:'])
+        self.gates_generator.and_gate(single_predicate_output_gates)
+        all_conditional_output_gates.append(self.gates_generator.output_gate)
+
+
+    self.encoding.append(['# Final conditional gate: '])
+    self.gates_generator.or_gate(all_conditional_output_gates)
+    self.conditional_final_output_gate = self.gates_generator.output_gate
+    self.encoding.append(["# ------------------------------------------------------------------------"])
 
   def generate_simple_restricted_forall_constraints(self):
 
@@ -265,7 +370,7 @@ class SimpleEncoding:
     self.encoding.append(['# And gate for initial, output and transition functions:'])
     self.gates_generator.and_gate(final_gates_list)
     # Restricting forall seems expensive, making it optional:
-    if (self.tfunc.parsed_instance.args.restricted_forall == 1):
+    if (self.tfunc.parsed_instance.args.restricted_forall >= 1):
       self.encoding.append(['# Conditional gate for forall restriction:'])
       self.gates_generator.if_then_gate(self.conditional_final_output_gate, self.gates_generator.output_gate)
     self.final_output_gate = self.gates_generator.output_gate
@@ -331,5 +436,7 @@ class SimpleEncoding:
     # Restricting forall seems expensive, making it optional:
     if (self.tfunc.parsed_instance.args.restricted_forall == 1):
       self.generate_simple_restricted_forall_constraints()
+    elif(self.tfunc.parsed_instance.args.restricted_forall == 2):
+      self.generate_restricted_forall_constraints()
 
     self.generate_final_gate()
