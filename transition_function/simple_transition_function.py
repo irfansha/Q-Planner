@@ -62,16 +62,20 @@ class SimpleTransitionFunction:
     # Loop through each parameter and generate equality gates:
     for i in range(len(parameters)):
       parameter = parameters[i]
+      forall_variables = self.forall_variables_list[i]
       # TODO: handle if a parameter is constant:
-      assert('?' in parameter)
-      parameter_variables = self.variables_map[(action_name, parameter)]
-      forall_varaibles = self.forall_variables_list[i]
-      # Printing for redability:
-      self.transition_gates.append(['# Equality gate for action parameter: (' + str(action_name) + ',' + str(parameter) + ') and ' + str(i) + 'th forall variables'])
-      self.transition_gates.append(['# parameter vars : (' + ', '.join(str(x) for x in parameter_variables) + ')'])
-      self.transition_gates.append(['# forall vars : (' + ', '.join(str(x) for x in forall_varaibles) + ')'])
-
-      self.gates_generator.complete_equality_gate(parameter_variables, forall_varaibles)
+      if ('?' not in parameter):
+        self.transition_gates.append(['# Generating binary constraint for constant parameter:'])
+        constant_index = self.probleminfo.objects.index(parameter)
+        mapped_forall_variables = self.generate_binary_format(forall_variables, constant_index)
+        self.gates_generator.and_gate(mapped_forall_variables)
+      else:
+        parameter_variables = self.variables_map[(action_name, parameter)]
+        # Printing for redability:
+        self.transition_gates.append(['# Equality gate for action parameter: (' + str(action_name) + ',' + str(parameter) + ') and ' + str(i) + 'th forall variables'])
+        self.transition_gates.append(['# parameter vars : (' + ', '.join(str(x) for x in parameter_variables) + ')'])
+        self.transition_gates.append(['# forall vars : (' + ', '.join(str(x) for x in forall_variables) + ')'])
+        self.gates_generator.complete_equality_gate(parameter_variables, forall_variables)
       parameter_gates.append(self.gates_generator.output_gate)
     # Generating action name gate:
     self.transition_gates.append(['# And gate for action: ' + str(action_name)])
@@ -192,7 +196,6 @@ class SimpleTransitionFunction:
           # Adding frame axiom gate to the predicate final gates:
           predicate_final_gates.append(self.gates_generator.output_gate)
 
-
       # Add seperator in encoding for better redability:
       self.transition_gates.append(["# ------------------------------------------------------------------------"])
 
@@ -228,10 +231,61 @@ class SimpleTransitionFunction:
       predicate_final_gates.append(-self.invalid_parameters_final_gate)
 
 
-    # TODO: equality gates, only with parameter variables:
+    equality_output_gates = []
+    # TODO: testing needed
+    # we do not handle constants yet, to be handled:
     for single_predicate_constraints in self.parsed_instance.predicate_constraints:
       if (single_predicate_constraints.name == '='):
-        assert(len(single_predicate_constraints.pos_pre) == 0 and len(single_predicate_constraints.neg_pre) == 0)
+        self.transition_gates.append(["# ------------------------------------------------------------------------"])
+        self.transition_gates.append(['# Equality gates: '])
+        # Asserting positive equality constraints not available:
+        assert(len(single_predicate_constraints.pos_pre) == 0)
+        for constraint  in single_predicate_constraints.neg_pre:
+          action_name = constraint[0]
+          cur_action_vars = self.variables_map[action_name]
+          self.transition_gates.append(['# Action and equality parameters gates: ' + str(constraint)])
+          self.gates_generator.and_gate(cur_action_vars)
+          cur_action_gate = self.gates_generator.output_gate
+          # equality constraints have arity 2:
+          first_parameter = constraint[1][0]
+          second_parameter = constraint[1][1]
+          # If a parameter is constant we get the binary representation list:
+          if ('?' not in first_parameter and '?' in second_parameter):
+            first_parameter_variables = []
+            second_parameter_variables = self.variables_map[(action_name, second_parameter)]
+            self.transition_gates.append(['# Generating binary constraint for second parameter because of first constant parameter:'])
+            constant_index = self.probleminfo.objects.index(first_parameter)
+            formatted_parameter_variables = self.generate_binary_format(second_parameter_variables, constant_index)
+            self.gates_generator.and_gate(formatted_parameter_variables)
+          elif ('?' in first_parameter and '?' not in second_parameter):
+            first_parameter_variables = self.variables_map[(action_name, first_parameter)]
+            second_parameter_variables = []
+            self.transition_gates.append(['# Generating binary constraint for first parameter because of second constant parameter:'])
+            constant_index = self.probleminfo.objects.index(second_parameter)
+            formatted_parameter_variables = self.generate_binary_format(first_parameter_variables, constant_index)
+            self.gates_generator.and_gate(formatted_parameter_variables)
+          elif('?' in first_parameter and '?' in second_parameter):
+            first_parameter_variables = self.variables_map[(action_name, first_parameter)]
+            second_parameter_variables = self.variables_map[(action_name, second_parameter)]
+            self.transition_gates.append(['# Generating equality constraints:'])
+            self.gates_generator.complete_equality_gate(first_parameter_variables, second_parameter_variables)
+          # We assert that both parameters are not constant:
+          assert('?' in first_parameter or '?' in second_parameter)
+          # Regardless of which branch taken we take the output gate:
+          output_gate = self.gates_generator.output_gate
+          # both are mutually exclusive:
+          self.gates_generator.if_then_gate(cur_action_gate, -output_gate)
+          equality_output_gates.append(self.gates_generator.output_gate)
+        self.transition_gates.append(["# ------------------------------------------------------------------------"])
+
+    if (len(equality_output_gates) != 0):
+      self.transition_gates.append(['# Final Equality output gate: '])
+      self.gates_generator.and_gate(equality_output_gates)
+      predicate_final_gates.append(self.gates_generator.output_gate)
+      self.transition_gates.append(["# ------------------------------------------------------------------------"])
+
+
+
 
     # Generating 'and' gate for all predicate condition gates:
     self.transition_gates.append(['# Final predicate condition "and" gate: '])
