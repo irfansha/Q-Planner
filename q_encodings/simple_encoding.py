@@ -4,6 +4,11 @@ from utils.variables_dispatcher import VarDispatcher as vd
 from utils.gates import GatesGen as gg
 from tarski.syntax import formulas as fr
 
+'''
+WARNING: It is possible that empty or gates might cause some problem,
+not sure but better to check in testing
+'''
+
 class SimpleEncoding:
 
   def print_gate_tofile(self, gate, f):
