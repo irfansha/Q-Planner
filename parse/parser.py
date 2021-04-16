@@ -153,6 +153,7 @@ class Parse:
         elif(isinstance(action.precondition, fr.Tautology)):
           preconditions_list = []
         else:
+          assert(action.precondition.connective == fr.Connective.And)
           preconditions_list = action.precondition.subformulas
         # Adding preconditons to constraints:
         for precondition in preconditions_list:

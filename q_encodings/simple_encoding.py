@@ -190,6 +190,7 @@ class SimpleEncoding:
       list_subformulas = [self.tfunc.parsed_instance.parsed_problem.goal]
     else:
       list_subformulas = self.tfunc.parsed_instance.parsed_problem.goal.subformulas
+      assert(self.tfunc.parsed_instance.parsed_problem.goal.connective == fr.Connective.And)
     for atom in list_subformulas:
       # If it is negative atom, then we need to consider as
       # compund formula:
