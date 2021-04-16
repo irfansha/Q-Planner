@@ -13,6 +13,9 @@ TODOS:
   - Invariants seem useful (intuitively), can be added both at existence level and for universal layer.
   - Conditional constraints on forall vars seem to work, perhaps simpler constraints might work best.
   - Conditional effects might be perfect for our encoding, might be efficient than other approaches.
+  - Ingore action costs and run the domains,seems to include many difficult domains that way.
+  - We do not need k copies of non-static variables instead we can use the universal variables to
+    "simulate" k steps with single transition function reducing encoding size -- worth investigating.
 '''
 
 import os
