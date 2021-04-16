@@ -6,7 +6,7 @@ from parse.parser import Parse as ps
 def test_blocks_domain(args):
   print("Testing Blocks domain:")
   # Setting args for Blocks domain:
-  args.path = os.path.join(os.getcwd(), 'testing', 'testcases', 'Blocks')
+  args.path = os.path.join(os.getcwd(), 'testing', 'testcases', 'other' ,'Blocks')
   args.domain = 'domain.pddl'
   args.problem = 'prob01.pddl'
   args.debug = 0
