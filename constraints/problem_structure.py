@@ -8,7 +8,7 @@ class ProblemInfo:
     self.static_predicates = []
     self.non_static_predicates = []
     self.valid_actions = parsed_instance.valid_actions
-    self.objects = parsed_instance.lang.constants()
+    self.objects = list(parsed_instance.lang.constants())
 
     # Looping through predicates to sort static and non-static predicates:
     for single_predicate_constraints in parsed_instance.predicate_constraints:
