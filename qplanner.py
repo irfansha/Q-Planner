@@ -2,18 +2,17 @@
 
 '''
 TODOS:
-  1. Separate == from predicates and generate gates without forall variables.
-  2. If an argument is a constant generate the fixed clause directly.
-  3. We add psuedo-grounded constraints for restricting search space for action variables
+  - We add psuedo-grounded constraints for restricting search space for action variables
      based on psuedo-grounding of static-predicates.
-  4. We also add constraints for forall variables based on predicate types to restrict search space.
-  5. Not restricted to static-predicates, we can also add constraints from Initial and
-     Goal states directly pruning away first and last actions.
-  6. Constraints between consecutive action steps can be added based on preconditions
-     and effects something similar to mutex-op.
-  7. Seems direct mutex operators are available, need to check if useful.
-  8. Invariants seem useful (intuitively), can be added both at existence level and for universal layer.
-  9. conditional constraints on forall vars seem to work, perhaps simpler constraints might work best.
+  - We also add constraints for forall variables based on predicate types to restrict search space.
+  - Not restricted to static-predicates, we can also add constraints from Initial and
+    Goal states directly pruning away first and last actions.
+  - Constraints between consecutive action steps can be added based on preconditions
+    and effects something similar to mutex-op.
+  - Seems direct mutex operators are available, need to check if useful.
+  - Invariants seem useful (intuitively), can be added both at existence level and for universal layer.
+  - Conditional constraints on forall vars seem to work, perhaps simpler constraints might work best.
+  - Conditional effects might be perfect for our encoding, might be efficient than other approaches.
 '''
 
 import os
