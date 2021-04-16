@@ -31,6 +31,9 @@ class Parse:
     self.generate_valid_types()
     self.generate_valid_actions()
 
+    # Asserting no functions present:
+    assert(len(self.lang.functions) == 0)
+
     # If debug is true we print all the information,
     # here all the parsed information:
     if (args.debug == 2):
@@ -59,6 +62,7 @@ class Parse:
       print("  Initial State: ", self.parsed_problem.init.as_atoms())
       print("  Goal State: ", self.parsed_problem.goal)
       print("  Objects: ", self.lang.constants())
+      print(self.lang.sorts)
       # constants and objects are combinedly called constants:
       for tp in self.lang.sorts:
         print("  Objects of type " + (tp.name) , list(self.lang.get(tp.name).domain()))
@@ -170,10 +174,13 @@ class Parse:
           if (isinstance(effect, fs.AddEffect)):
             if (effect.atom.predicate.name == predicate.name):
               single_predicate_constraints.add_poseff_constraint(action_name, self.get_parameter_symbols(effect.atom))
-          else:
-            assert(isinstance(effect, fs.DelEffect))
+          elif(isinstance(effect, fs.DelEffect)):
             if (effect.atom.predicate.name == predicate.name):
               single_predicate_constraints.add_negeff_constraint(action_name, self.get_parameter_symbols(effect.atom))
+          else:
+            # Must not be reachable yet:
+            assert(True)
+            print("TODO: handle conditional effects")
             #print(effect, effect.atom.predicate)
       self.predicate_constraints.append(single_predicate_constraints)
 
