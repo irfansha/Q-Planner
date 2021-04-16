@@ -3,6 +3,7 @@
 import os
 import zipfile
 import testing.blocks_test as bt
+import testing.complete_tests as ct
 
 def run_tests(args):
   # Check if the zipped testcases are unzipped,
@@ -19,3 +20,5 @@ def run_tests(args):
     print("Blocks domain ok...")
   else:
     print("Error in Block domain!")
+
+  ct.run_tests(args)
