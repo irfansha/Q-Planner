@@ -85,6 +85,7 @@ class SimpleEncoding:
     list_obj_instances = []
     for atom in self.tfunc.parsed_instance.parsed_problem.init.as_atoms():
       if (atom.predicate.name == predicate):
+        self.encoding.append(['# Current atom constraint: ' + str(atom)])
         # Gates for one proposition:
         single_instance_gates = []
         # We generate and gates for each parameter:
@@ -92,8 +93,8 @@ class SimpleEncoding:
           subterm = atom.subterms[i]
           cur_variables = self.forall_variables_list[i]
           # Finding object index:
-          for obj_index in range(len(self.tfunc.parsed_instance.lang.constants())):
-            if (subterm.name == self.tfunc.parsed_instance.lang.constants()[obj_index].name):
+          for obj_index in range(len(self.tfunc.probleminfo.objects)):
+            if (subterm.name == self.tfunc.probleminfo.objects[obj_index].name):
               gate_variables = self.tfunc.generate_binary_format(cur_variables, obj_index)
               self.gates_generator.and_gate(gate_variables)
               single_instance_gates.append(self.gates_generator.output_gate)
@@ -122,8 +123,8 @@ class SimpleEncoding:
         # Since variables always have one parameter, we choose first set of forall variables:
         cur_variables = self.forall_variables_list[0]
         # Finding the position of object needed:
-        for obj_index in range(len(self.tfunc.parsed_instance.lang.constants())):
-          if (obj.name == self.tfunc.parsed_instance.lang.constants()[obj_index].name):
+        for obj_index in range(len(self.tfunc.probleminfo.objects)):
+          if (obj.name == self.tfunc.probleminfo.objects[obj_index].name):
             gate_variables = self.tfunc.generate_binary_format(cur_variables, obj_index)
             self.gates_generator.and_gate(gate_variables)
             same_type_gates.append(self.gates_generator.output_gate)
@@ -214,8 +215,8 @@ class SimpleEncoding:
           subterm = cur_atom.subterms[i]
           cur_variables = self.forall_variables_list[i]
           # Finding object index:
-          for obj_index in range(len(self.tfunc.parsed_instance.lang.constants())):
-            if (subterm.name == self.tfunc.parsed_instance.lang.constants()[obj_index].name):
+          for obj_index in range(len(self.tfunc.probleminfo.objects)):
+            if (subterm.name == self.tfunc.probleminfo.objects[obj_index].name):
               gate_variables = self.tfunc.generate_binary_format(cur_variables, obj_index)
               self.gates_generator.and_gate(gate_variables)
               single_instance_gates.append(self.gates_generator.output_gate)
@@ -304,8 +305,8 @@ class SimpleEncoding:
       obj_list = list(self.tfunc.parsed_instance.lang.get(tp.name).domain())
       obj_index_list = []
       for obj in obj_list:
-        for i in range(len(self.tfunc.parsed_instance.lang.constants())):
-          if (obj.name == self.tfunc.parsed_instance.lang.constants()[i].name):
+        for i in range(len(self.tfunc.probleminfo.objects)):
+          if (obj.name == self.tfunc.probleminfo.objects[i].name):
             obj_index_list.append(i)
             break
       obj_index_list.sort()
