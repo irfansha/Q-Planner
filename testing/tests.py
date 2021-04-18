@@ -8,10 +8,10 @@ import testing.complete_tests as ct
 def run_tests(args):
   # Check if the zipped testcases are unzipped,
   # if not, unzipping them:
-  if(not os.path.exists(os.path.join(os.getcwd(), 'testing' , 'testcases'))):
+  if(not os.path.exists(os.path.join(args.planner_path, 'testing' , 'testcases'))):
     print("Unzipping testcases")
-    testcases_zip_path = os.path.join(os.getcwd(), 'testing' , 'testcases.zip')
-    current_directory = os.path.join(os.getcwd(), 'testing')
+    testcases_zip_path = os.path.join(args.planner_path, 'testing' , 'testcases.zip')
+    current_directory = os.path.join(args.planner_path, 'testing')
     with zipfile.ZipFile(testcases_zip_path, 'r') as zip_ref:
       zip_ref.extractall(current_directory)
 

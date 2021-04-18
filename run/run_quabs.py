@@ -37,7 +37,7 @@ class RunQuabs():
     self.time_limit = args.time_limit
     # By default timeout not occured yet:
     self.timed_out = False
-    self.solver_path = os.path.join(os.getcwd(), 'solvers', 'quabs', 'quabs')
+    self.solver_path = os.path.join(args.planner_path, 'solvers', 'quabs', 'quabs')
     self.sol_map = {}
     self.sat = -1 # by default plan not found.
 

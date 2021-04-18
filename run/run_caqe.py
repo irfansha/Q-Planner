@@ -58,7 +58,7 @@ class RunCaqe():
     self.preprocessing = args.preprocessing
     # By default timeout not occured yet:
     self.timed_out = False
-    self.solver_path = os.path.join(os.getcwd(), 'solvers', 'caqe', 'caqe')
+    self.solver_path = os.path.join(args.planner_path, 'solvers', 'caqe', 'caqe')
     self.sol_map = {}
     self.sat = -1 # by default plan not found.
 

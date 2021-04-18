@@ -3,8 +3,6 @@
 import os
 
 
-competition_testcase_path = os.path.join(os.getcwd(), 'testing', 'testcases', 'competition')
-
 competition_sat_list = [("IPC1", "gripper", "prob01.pddl", 11), ("IPC1", "movie", "prob01.pddl", 7),
                         ("IPC1","movie", "prob02.pddl", 7),
                         ("IPC2","Blocks", "prob01.pddl", 6), ("IPC2","Blocks", "prob02.pddl",12),
@@ -55,12 +53,13 @@ def gen_new_arguments(path, domain, problem, k, args):
 def run_tests(args):
     count = 0
     all_success = 1
+    competition_testcase_path = os.path.join(args.planner_path, 'testing', 'testcases', 'competition')
     # Running testcases that have a plan:
     for testcase in competition_sat_list:
       count += 1
       print("\n--------------------------------------------------------------------------------")
       print("testcase" + str(count) + " :")
-      path = os.path.join(os.getcwd(),competition_testcase_path, testcase[0], testcase[1])
+      path = os.path.join(args.planner_path,competition_testcase_path, testcase[0], testcase[1])
       domain = 'domain.pddl'
       problem = testcase[2]
       print(path, domain, problem, testcase[3])
@@ -80,7 +79,7 @@ def run_tests(args):
           print("failed! plan must exist")
       elif ('Plan found' in plan_status):
         # Validating the plan generated:
-        Val_path = os.path.join(os.getcwd(),"tools", "VAL" ,"Validate")
+        Val_path = os.path.join(args.planner_path,"tools", "VAL" ,"Validate")
         domain_full_path = os.path.join(path, 'domain.pddl')
         problem_full_path = os.path.join(path, testcase[2])
         command = Val_path + ' ' + domain_full_path + ' ' + problem_full_path + ' ' + args.plan_out
@@ -102,7 +101,7 @@ def run_tests(args):
       count += 1
       print("\n--------------------------------------------------------------------------------")
       print("testcase" + str(count) + " :")
-      path = os.path.join(os.getcwd(),competition_testcase_path, testcase[0], testcase[1])
+      path = os.path.join(args.planner_path,competition_testcase_path, testcase[0], testcase[1])
       domain = 'domain.pddl'
       problem = testcase[2]
       print(path, domain, problem, testcase[3])
