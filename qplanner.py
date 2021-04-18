@@ -19,6 +19,7 @@ TODOS:
 '''
 
 import os
+import time
 import argparse, textwrap
 from parse.parser import Parse as ps
 import testing.tests as ts
@@ -46,7 +47,7 @@ if __name__ == '__main__':
                                0 = only generate encoding
                                1 = test plan existence
                                2 = extract the plan if found'''),default = 2)
-  parser.add_argument("--val_testing", type=int, help="[0/1], default 0", default = 1)
+  parser.add_argument("--val_testing", type=int, help="[0/1], default 1", default = 1)
   parser.add_argument("--encoding_format", type=int, help="Encoding format: [1 = QCIR14 2 = QDIMACS], default 2",default = 2)
   parser.add_argument("--encoding_out", help="output encoding file",default = 'intermediate_files/encoding')
   parser.add_argument("--solver", type=int, help=textwrap.dedent('''
@@ -62,7 +63,7 @@ if __name__ == '__main__':
                                        0 = off
                                        1 = bloqqer (version 37)
                                        2 = bloqqer-qdo (version 37)'''),default = 0)
-  parser.add_argument("--time_limit", type=int, help="Solving time limit in seconds, default 900 seconds",default = 1800)
+  parser.add_argument("--time_limit", type=float, help="Solving time limit in seconds, default 1800 seconds",default = 1800)
   parser.add_argument("--preprocessing_time_limit", type=int, help="Preprocessing time limit in seconds, default 900 seconds",default = 900)
   args = parser.parse_args()
 
@@ -71,7 +72,7 @@ if __name__ == '__main__':
   print(args)
 
   if args.version:
-    print("Version 0.4")
+    print("Version 0.5")
 
   # Cannot extract a plan with simple bloqqer
   # (must use bloqqer-qdo instead):
@@ -87,6 +88,8 @@ if __name__ == '__main__':
     ts.run_tests(args)
     exit()
 
+  # --------------------------------------- Timing the encoding ----------------------------------------
+  start_encoding_time = time.perf_counter()
 
   parsed_instance = ps(args)
 
@@ -105,5 +108,21 @@ if __name__ == '__main__':
   encoding = ge.generate_encoding(tfunc)
   # TODO: Add new strongly constrained encoding module
 
+
+  encoding_time = time.perf_counter() - start_encoding_time
+  print("Encoding time: " + str(encoding_time))
+  # ----------------------------------------------------------------------------------------------------
+
   if (args.run >= 1):
+    # --------------------------------------- Timing the solver run ----------------------------------------
+    start_run_time = time.perf_counter()
+
     rs.run_single_solver(encoding)
+
+    solving_time = time.perf_counter() - start_run_time
+    print("Solving time: " + str(solving_time) + "\n")
+    # ------------------------------------------------------------------------------------------------------
+
+  # ------------------------------------- Printing memory stats of encodings -----------------------------
+  print("Encoding size (in KB): " + str(os.path.getsize(args.encoding_out)/1000))
+  # ------------------------------------------------------------------------------------------------------
