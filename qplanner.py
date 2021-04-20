@@ -34,7 +34,7 @@ if __name__ == '__main__':
   text = "A tool to encode PDDL (strips) problems to SAT/QBF encodings and compute a plan if exists"
   parser = argparse.ArgumentParser(description=text,formatter_class=argparse.RawTextHelpFormatter)
   parser.add_argument("-V", "--version", help="show program version", action="store_true")
-  parser.add_argument("--path", help="path for domain and problem files", default = 'testing/testcases/Blocks/')
+  parser.add_argument("--path", help="path for domain and problem files", default = 'testing/testcases/other/Blocks/')
   parser.add_argument("--domain", help="domain file path", default = 'domain.pddl')
   parser.add_argument("--problem", help="problem file path", default = 'prob01.pddl')
   parser.add_argument("--planner_path", help="path for qplanner.py, allowing remote run", default = os.getcwd())
@@ -52,6 +52,7 @@ if __name__ == '__main__':
   parser.add_argument("--val_testing", type=int, help="[0/1], default 1", default = 1)
   parser.add_argument("--encoding_format", type=int, help="Encoding format: [1 = QCIR14 2 = QDIMACS], default 2",default = 2)
   parser.add_argument("--encoding_out", help="output encoding file",default = 'intermediate_files/encoding')
+  parser.add_argument("--intermediate_encoding_out", help="output intermediate encoding file",default = 'intermediate_files/intermediate_encoding')
   parser.add_argument("--solver", type=int, help=textwrap.dedent('''
                                        Solver:
                                        1 = quabs
@@ -59,7 +60,7 @@ if __name__ == '__main__':
   parser.add_argument("--solver_out", help="solver output file",default = 'intermediate_files/solver_output')
   parser.add_argument("--debug", type=int, help="[0/1], default 0" ,default = 0)
   parser.add_argument("--run_tests", type=int, help="[0/1], default 0",default = 0)
-  parser.add_argument("--restricted_forall", type=int, help=" Additional clause to restrict forall branches [0/1/2], default 1",default = 1)
+  parser.add_argument("--restricted_forall", type=int, help=" Additional clause to restrict forall branches [0/1/2], default 0",default = 0)
   parser.add_argument("--preprocessing", type = int, help=textwrap.dedent('''
                                        Preprocessing:
                                        0 = off
@@ -97,12 +98,12 @@ if __name__ == '__main__':
 
   # Instead of action specific constraints,
   # predicate specific constraints are generated:
-  parsed_instance.generate_predicate_constraints()
-
-  # Generating simple transition function:
   if (args.e == 's-UE'):
+    parsed_instance.generate_predicate_constraints()
+    # Generating simple transition function:
     tfunc = stf(parsed_instance)
   elif (args.e == 'sc-UE'):
+    parsed_instance.generate_only_nonstatic_predicate_constraints()
     tfunc = sctf(parsed_instance)
 
   # Printing the transition function is debug is active:

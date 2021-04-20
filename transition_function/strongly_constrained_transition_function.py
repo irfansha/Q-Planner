@@ -65,7 +65,7 @@ class StronglyConstrainedTransitionFunction:
     for i in range(len(parameters)):
       parameter = parameters[i]
       forall_variables = self.forall_variables_list[i]
-      # TODO: handle if a parameter is constant:
+      # Handling when a parameter is constant:
       if ('?' not in parameter):
         self.transition_gates.append(['# Generating binary constraint for constant parameter ' + str(parameter) + ':'])
         # Finding object position:
@@ -219,22 +219,6 @@ class StronglyConstrainedTransitionFunction:
       # Adding negative of invalid or gates:
       predicate_final_gates.append(-self.invalid_actions_final_gate)
 
-    invalid_parameter_gates = []
-    # Generating negative constraints for impossible parameter values:
-    self.transition_gates.append(['# Invalid parameter gates: '])
-    for parameter_vars in self.parameter_variable_list:
-      for i in range(self.probleminfo.num_objects, self.probleminfo.num_possible_parameter_values):
-        cur_invalid_parameter_vars_list = self.generate_binary_format(parameter_vars, i)
-        self.gates_generator.and_gate(cur_invalid_parameter_vars_list)
-        invalid_parameter_gates.append(self.gates_generator.output_gate)
-
-    # Or gate to check if any one of them is true:
-    if (len(invalid_parameter_gates) != 0):
-      self.gates_generator.or_gate(invalid_parameter_gates)
-      self.invalid_parameters_final_gate = self.gates_generator.output_gate
-      # Adding negative of invalid or gates:
-      predicate_final_gates.append(-self.invalid_parameters_final_gate)
-
 
     equality_output_gates = []
     # TODO: testing needed
@@ -295,8 +279,76 @@ class StronglyConstrainedTransitionFunction:
       predicate_final_gates.append(self.gates_generator.output_gate)
       self.transition_gates.append(["# ------------------------------------------------------------------------"])
 
+    self.transition_gates.append(["# ------------------------------------------------------------------------"])
+    self.transition_gates.append(['# Type gates: '])
 
+    num_objects = len(self.parsed_instance.lang.constants())
+    # Generating constraints for each action:
+    for action_name in self.parsed_instance.valid_actions:
+      action = self.parsed_instance.parsed_problem.get_action(action_name)
+      self.transition_gates.append(['# Type gates for Action : ' + str(action)])
+      # we make a conjunction of parameter types:
+      single_action_parameter_type_output_gates = []
+      for parameter in action.parameters:
+        type_name = parameter.sort.name
+        cur_objects = list(self.parsed_instance.lang.get(type_name).domain())
+        # If all object are of this type, no constraint needed:
+        if (len(cur_objects) == num_objects):
+          continue
+        # For each current obj we make a gate:
+        # We need to make and of or gates:
+        single_type_output_gates = []
+        for obj in cur_objects:
+          # Finding object position:
+          object_index = -1
+          # Perhaps can be made easy with index functions:
+          for i in range(len(self.probleminfo.objects)):
+            if (obj.name == self.probleminfo.objects[i].name):
+              object_index = i
+              break
+          formatted_obj_variables = self.generate_binary_format(self.variables_map[(action_name, parameter.symbol)], object_index)
+          self.gates_generator.and_gate(formatted_obj_variables)
+          single_type_output_gates.append(self.gates_generator.output_gate)
+        self.transition_gates.append(['# OR gate for single type' + str(type_name)])
+        self.gates_generator.or_gate(single_type_output_gates)
+        single_action_parameter_type_output_gates.append(self.gates_generator.output_gate)
+      # We explicitly say the rest of the undefined parameter are zeros:
+      for i in range(len(action.parameters), self.probleminfo.max_action_parameters):
+        self.transition_gates.append(['# undefined parameters forced to zero:'])
+        formatted_zero_parameters = self.generate_binary_format(self.parameter_variable_list[i], 0)
+        self.gates_generator.and_gate(formatted_zero_parameters)
+        single_action_parameter_type_output_gates.append(self.gates_generator.output_gate)
+      # Making an and gate for all parameter gates:
+      self.transition_gates.append(['# And gate for single action parameters:'])
+      self.gates_generator.and_gate(single_action_parameter_type_output_gates)
+      parameters_output_gate = self.gates_generator.output_gate
+      self.transition_gates.append(['# if then gate for single action to parameters:'])
+      action_variables = self.variables_map[action_name]
+      self.gates_generator.and_gate(action_variables)
+      if_gate = self.gates_generator.output_gate
+      self.gates_generator.if_then_gate(if_gate, parameters_output_gate)
+      # Appending to the predicate final gates:
+      predicate_final_gates.append(self.gates_generator.output_gate)
 
+    # Noop constraints:
+    noop_formatted_action_vars = self.generate_binary_format(self.action_vars, self.probleminfo.num_valid_actions)
+    self.transition_gates.append(['# constraining noop action:'])
+    self.gates_generator.and_gate(noop_formatted_action_vars)
+    if_noop_gate = self.gates_generator.output_gate
+    noop_action_parameter_output_gates = []
+    # setting all parameters to zero:
+    for i in range(self.probleminfo.max_action_parameters):
+      self.transition_gates.append(['# undefined parameters forced to zero:'])
+      formatted_zero_parameters = self.generate_binary_format(self.parameter_variable_list[i], 0)
+      self.gates_generator.and_gate(formatted_zero_parameters)
+      noop_action_parameter_output_gates.append(self.gates_generator.output_gate)
+    self.gates_generator.and_gate(noop_action_parameter_output_gates)
+    noop_action_then_gate = self.gates_generator.output_gate
+    self.transition_gates.append(['# if then gate for noop action to parameters:'])
+    self.gates_generator.if_then_gate(if_noop_gate, noop_action_then_gate)
+    predicate_final_gates.append(self.gates_generator.output_gate)
+
+    self.transition_gates.append(["# ------------------------------------------------------------------------"])
 
     # Generating 'and' gate for all predicate condition gates:
     self.transition_gates.append(['# Final predicate condition "and" gate: '])
@@ -329,8 +381,9 @@ class StronglyConstrainedTransitionFunction:
     # Generating transition function:
     self.generate_transition_function()
     self.string_transition_gates = ''
-    for gate in self.transition_gates:
-        self.string_transition_gates += str(gate) + "\n"
+    # Commenting out transition gates in debug printing:
+    #for gate in self.transition_gates:
+    #    self.string_transition_gates += str(gate) + "\n"
 
     # Compute number of auxilary variables are needed:
     self.num_auxilary_variables = self.final_transition_gate - self.num_main_variables

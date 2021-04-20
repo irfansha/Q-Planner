@@ -119,49 +119,17 @@ class StronglyConstrainedEncoding:
 
     self.encoding.append(["# ------------------------------------------------------------------------"])
     self.encoding.append(['# Initial state: '])
-    self.encoding.append(['# Type constraints: '])
-    for valid_type in self.tfunc.parsed_instance.valid_types:
-      # We consider only static predicate types:
-      if valid_type.name not in self.tfunc.probleminfo.static_predicates:
-        continue
-      self.encoding.append(['# Type: ' + str(valid_type.name)])
-      same_type_gates = []
-      cur_type_objects = list(self.tfunc.parsed_instance.lang.get(valid_type.name).domain())
-      for obj in cur_type_objects:
-        # Since variables always have one parameter, we choose first set of forall variables:
-        cur_variables = self.forall_variables_list[0]
-        # Finding the position of object needed:
-        for obj_index in range(len(self.tfunc.probleminfo.objects)):
-          if (obj.name == self.tfunc.probleminfo.objects[obj_index].name):
-            gate_variables = self.tfunc.generate_binary_format(cur_variables, obj_index)
-            self.gates_generator.and_gate(gate_variables)
-            same_type_gates.append(self.gates_generator.output_gate)
-            break
-      # If any of the combination is true then, the predicate is true:
-      self.gates_generator.or_gate(same_type_gates)
-      type_final_gate = self.gates_generator.output_gate
-      # Fetching corresponding static variable
-      self.encoding.append(['# iff condition for the type predicate '])
-      cur_static_variable = self.static_variables[self.tfunc.probleminfo.static_predicates.index(valid_type.name)]
-      self.gates_generator.single_equality_gate(type_final_gate, cur_static_variable)
-      initial_step_output_gates.append(self.gates_generator.output_gate)
 
     # Constraints for static variables that are not types:
     self.encoding.append(['# Non-type static predicate constraints: '])
     for static_predicate in self.tfunc.probleminfo.static_predicates:
-      type_flag = 0
-      for valid_type in self.tfunc.parsed_instance.valid_types:
-        if (valid_type.name == static_predicate):
-          type_flag = 1
-      # If not a type:
-      if (type_flag == 0):
-        self.encoding.append(['# static predicate: ' + str(static_predicate)])
-        single_predicate_final_gate = self.generate_initial_predicate_constraints(static_predicate)
-        # Fetching corresponding static variable
-        self.encoding.append(['# iff condition for the predicate '])
-        cur_static_variable = self.static_variables[self.tfunc.probleminfo.static_predicates.index(static_predicate)]
-        self.gates_generator.single_equality_gate(single_predicate_final_gate, cur_static_variable)
-        initial_step_output_gates.append(self.gates_generator.output_gate)
+      self.encoding.append(['# static predicate: ' + str(static_predicate)])
+      single_predicate_final_gate = self.generate_initial_predicate_constraints(static_predicate)
+      # Fetching corresponding static variable
+      self.encoding.append(['# iff condition for the predicate '])
+      cur_static_variable = self.static_variables[self.tfunc.probleminfo.static_predicates.index(static_predicate)]
+      self.gates_generator.single_equality_gate(single_predicate_final_gate, cur_static_variable)
+      initial_step_output_gates.append(self.gates_generator.output_gate)
 
     # Constraints for non-static variables:
     self.encoding.append(['# Non-static predicate constraints: '])

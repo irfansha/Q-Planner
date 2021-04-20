@@ -192,3 +192,66 @@ class Parse:
       for single_predicate_constraints in self.predicate_constraints:
         print(single_predicate_constraints)
       print("#------------------------------------------------------------------------\n")
+
+  # Generates predicate specific constraints, in PDDL specification
+  # for each action the preconditions and effects are specified here
+  # we generate preconditions and effects for each predicate:
+  def generate_only_nonstatic_predicate_constraints(self):
+
+    self.predicate_constraints = []
+
+    # TODO: also remove static predicates
+    # For each normal predicates, we add constraints from each action,
+    # WARNING: generating constraints, errors possible,
+    # TODO: add rigorous testing for several domains:
+    for predicate in self.lang.predicates:
+      # Handling =, != symbols by converting them to strings:
+      single_predicate_constraints = pc(str(predicate.name))
+      for action_name in self.valid_actions:
+        action = self.parsed_problem.get_action(action_name)
+        # If single condition, then not a compound formula
+        # so handling both conditions:
+        if (fr.is_atom(action.precondition)):
+          preconditions_list = [action.precondition]
+        elif(isinstance(action.precondition, fr.Tautology)):
+          preconditions_list = []
+        else:
+          assert(action.precondition.connective == fr.Connective.And)
+          preconditions_list = action.precondition.subformulas
+        # Adding preconditons to constraints:
+        for precondition in preconditions_list:
+          # If it is negative atom, then we need to consider as
+          # compund formula:
+          if(fr.is_neg(precondition)):
+            # Asserting negation connective:
+            assert(precondition.connective == fr.Connective.Not)
+            # Asserting single precondition:
+            assert(len(precondition.subformulas) == 1)
+            cur_predicate = precondition.subformulas[0]
+            if(cur_predicate.predicate.name == predicate.name):
+              single_predicate_constraints.add_negpre_constraint(action_name, self.get_parameter_symbols(cur_predicate))
+          else:
+            if (precondition.predicate.name == predicate.name):
+              single_predicate_constraints.add_pospre_constraint(action_name, self.get_parameter_symbols(precondition))
+        # Adding effects to constraints:
+        for effect in action.effects:
+          if (isinstance(effect, fs.AddEffect)):
+            if (effect.atom.predicate.name == predicate.name):
+              single_predicate_constraints.add_poseff_constraint(action_name, self.get_parameter_symbols(effect.atom))
+          elif(isinstance(effect, fs.DelEffect)):
+            if (effect.atom.predicate.name == predicate.name):
+              single_predicate_constraints.add_negeff_constraint(action_name, self.get_parameter_symbols(effect.atom))
+          else:
+            # Must not be reachable yet:
+            assert(True)
+            print("TODO: handle conditional effects")
+            #print(effect, effect.atom.predicate)
+      self.predicate_constraints.append(single_predicate_constraints)
+
+
+    if (self.args.debug >= 1):
+      print("#------------------------------------------------------------------------\n")
+      print("Predicate constraints: ")
+      for single_predicate_constraints in self.predicate_constraints:
+        print(single_predicate_constraints)
+      print("#------------------------------------------------------------------------\n")
