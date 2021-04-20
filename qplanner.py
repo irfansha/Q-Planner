@@ -25,6 +25,7 @@ from parse.parser import Parse as ps
 import testing.tests as ts
 import q_encodings.encoder as ge
 from transition_function.simple_transition_function import SimpleTransitionFunction as stf
+from transition_function.strongly_constrained_transition_function import StronglyConstrainedTransitionFunction as sctf
 import run.run_solver as rs
 
 
@@ -41,7 +42,8 @@ if __name__ == '__main__':
   parser.add_argument("--plan_length", type=int,default = 4)
   parser.add_argument("-e", help=textwrap.dedent('''
                                   encoding types:
-                                  s-UE = Simple Ungrounded Encoding'''),default = 's-UE')
+                                  s-UE = Simple Ungrounded Encoding
+                                  sc-UE = Strongly Constrained Ungrounded Encoding'''),default = 's-UE')
   parser.add_argument("--run", type=int, help=textwrap.dedent('''
                                Three levels of execution:
                                0 = only generate encoding
@@ -98,7 +100,10 @@ if __name__ == '__main__':
   parsed_instance.generate_predicate_constraints()
 
   # Generating simple transition function:
-  tfunc = stf(parsed_instance)
+  if (args.e == 's-UE'):
+    tfunc = stf(parsed_instance)
+  elif (args.e == 'sc-UE'):
+    tfunc = sctf(parsed_instance)
 
   # Printing the transition function is debug is active:
   if (args.debug >= 1):
@@ -106,6 +111,7 @@ if __name__ == '__main__':
 
   # TODO: Add new encoding generator module, and a new simple encoding module
   encoding = ge.generate_encoding(tfunc)
+
   # TODO: Add new strongly constrained encoding module
 
 
