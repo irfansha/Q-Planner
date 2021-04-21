@@ -54,9 +54,6 @@ class StronglyConstrainedEncoding:
     third_layer_variables = []
 
     self.quantifier_block.append(['# non-static predicate variables :'])
-    self.quantifier_block.append(['# ' + str(self.static_variables)])
-    third_layer_variables.extend(self.static_variables)
-    self.quantifier_block.append(['# non-static predicate variables :'])
     for i in range(self.tfunc.parsed_instance.args.plan_length + 1):
       self.quantifier_block.append(['# ' + str(self.non_static_variables[i])])
       third_layer_variables.extend(self.non_static_variables[i])
@@ -79,8 +76,7 @@ class StronglyConstrainedEncoding:
       # Forall variables:
       for j in range(len(self.forall_variables_list)):
         all_vars.extend(self.forall_variables_list[j])
-      # Static predicate variables:
-      all_vars.extend(self.static_variables)
+
       # i, i+1 th non-static predicates:
       all_vars.extend(self.non_static_variables[i])
       all_vars.extend(self.non_static_variables[i+1])
@@ -120,16 +116,6 @@ class StronglyConstrainedEncoding:
     self.encoding.append(["# ------------------------------------------------------------------------"])
     self.encoding.append(['# Initial state: '])
 
-    # Constraints for static variables that are not types:
-    self.encoding.append(['# Non-type static predicate constraints: '])
-    for static_predicate in self.tfunc.probleminfo.static_predicates:
-      self.encoding.append(['# static predicate: ' + str(static_predicate)])
-      single_predicate_final_gate = self.generate_initial_predicate_constraints(static_predicate)
-      # Fetching corresponding static variable
-      self.encoding.append(['# iff condition for the predicate '])
-      cur_static_variable = self.static_variables[self.tfunc.probleminfo.static_predicates.index(static_predicate)]
-      self.gates_generator.single_equality_gate(single_predicate_final_gate, cur_static_variable)
-      initial_step_output_gates.append(self.gates_generator.output_gate)
 
     # Constraints for non-static variables:
     self.encoding.append(['# Non-static predicate constraints: '])
@@ -328,7 +314,6 @@ class StronglyConstrainedEncoding:
 
     # Perhaps easier to just go through all the predicates at once:
     all_valid_predicates = []
-    all_valid_predicates.extend(self.tfunc.probleminfo.static_predicates)
     all_valid_predicates.extend(self.tfunc.probleminfo.non_static_predicates)
 
     # Adding constraints for the forall variables based on predicates:
@@ -432,16 +417,13 @@ class StronglyConstrainedEncoding:
       self.parameter_variables.append(single_step_parameter_variable_list)
 
 
-    # generating forall varibles with max predicate arity:
+    # generating forall varibles with max non static predicate arity:
     self.forall_variables_list = []
-    for i in range(tfunc.probleminfo.max_predicate_parameters):
+    for i in range(tfunc.probleminfo.max_non_static_predicate_parameters):
       # number of parameter variables is same as predicate parameters:
       step_forall_variables = self.encoding_variables.get_vars(tfunc.probleminfo.num_parameter_variables)
       self.forall_variables_list.append(step_forall_variables)
 
-
-    # generating static variables only one set is enough, as no propagation:
-    self.static_variables = self.encoding_variables.get_vars(tfunc.probleminfo.num_static_predicates)
 
     # generating k+1 sets of non-static variables for propagation:
     self.non_static_variables = []

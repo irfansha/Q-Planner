@@ -19,13 +19,10 @@ class StronglyConstrainedTransitionFunction:
 
     # generating forall varibles with max predicate arity:
     self.forall_variables_list = []
-    for i in range(self.probleminfo.max_predicate_parameters):
+    for i in range(self.probleminfo.max_non_static_predicate_parameters):
       # number of parameter variables is same as predicate parameters:
       step_forall_variables = self.transition_variables.get_vars(self.probleminfo.num_parameter_variables)
       self.forall_variables_list.append(step_forall_variables)
-
-    # generating static variables only one set is enough, as no propagation:
-    self.static_variables = self.transition_variables.get_vars(self.probleminfo.num_static_predicates)
 
     # generating two sets of non-static variables for propagation:
     self.first_non_static_variables = self.transition_variables.get_vars(self.probleminfo.num_non_static_predicates)
@@ -43,9 +40,6 @@ class StronglyConstrainedTransitionFunction:
       for i in range(len(action.parameters)):
         self.variables_map[(action_name, action.parameters[i].symbol)] = self.parameter_variable_list[i]
 
-    # Adding static variables to map:
-    for i in range(len(self.probleminfo.static_predicates)):
-      self.variables_map[self.probleminfo.static_predicates[i]] = self.static_variables[i]
 
     # Adding first-step non-static variables to map:
     for i in range(len(self.probleminfo.non_static_predicates)):
@@ -72,6 +66,7 @@ class StronglyConstrainedTransitionFunction:
         for i in range(len(self.probleminfo.objects)):
           if (parameter == self.probleminfo.objects[i].name):
             constant_index = i
+            break
         mapped_forall_variables = self.generate_binary_format(forall_variables, constant_index)
         self.gates_generator.and_gate(mapped_forall_variables)
       else:
@@ -128,6 +123,31 @@ class StronglyConstrainedTransitionFunction:
         cur_variable_list.append(clause_variables[j])
     return cur_variable_list
 
+  # Finds object instantiations of a predicate and computes or-of-and gate:
+  def generate_static_constraints(self, predicate, parameter_variable_list):
+    list_obj_instances = []
+    for atom in self.parsed_instance.parsed_problem.init.as_atoms():
+      if (atom.predicate.name == predicate):
+        self.transition_gates.append(['# Current atom constraint: ' + str(atom)])
+        # Gates for one proposition:
+        single_instance_gates = []
+        # We generate and gates for each parameter:
+        for i in range(len(atom.subterms)):
+          subterm = atom.subterms[i]
+          cur_variables = parameter_variable_list[i]
+          # Finding object index:
+          for obj_index in range(len(self.probleminfo.objects)):
+            if (subterm.name == self.probleminfo.objects[obj_index].name):
+              gate_variables = self.generate_binary_format(cur_variables, obj_index)
+              self.gates_generator.and_gate(gate_variables)
+              single_instance_gates.append(self.gates_generator.output_gate)
+              break
+        self.gates_generator.and_gate(single_instance_gates)
+        list_obj_instances.append(self.gates_generator.output_gate)
+    # Finally an or gates for all the instances:
+    self.gates_generator.or_gate(list_obj_instances)
+    return self.gates_generator.output_gate
+
 
   def generate_transition_function(self):
     self.gates_generator = gg(self.transition_variables, self.transition_gates)
@@ -135,7 +155,9 @@ class StronglyConstrainedTransitionFunction:
     # We just gather gates for all predicates:
     predicate_final_gates = []
 
+    # TODO: need to handle constants:
     # Generating gates for static predicates:
+    self.transition_gates.append(["# ------------------------------------------------------------------------"])
     for static_predicate in self.probleminfo.static_predicates:
       self.transition_gates.append(['# constraints for "' + str(static_predicate) + '" ----------------------------------------------'])
       # Looping through predicate constraints list for the current predicate:
@@ -145,13 +167,36 @@ class StronglyConstrainedTransitionFunction:
           # Positive precondition constraints:
           self.transition_gates.append(['# Postive preconditions: '])
           if (len(single_predicate_constraints.pos_pre) != 0):
-            self.constraints_generator(single_predicate_constraints.pos_pre, self.variables_map[static_predicate])
-            predicate_final_gates.append(self.gates_generator.output_gate)
+            # For each positive condition we generate claues:
+            for pos_pre in single_predicate_constraints.pos_pre:
+              self.transition_gates.append(['# Postive precondition ' + str(pos_pre) + ': '])
+              action_name = pos_pre[0]
+              static_parameter_variables_list = []
+              for each_parameter in pos_pre[1]:
+                static_parameter_variables_list.append(self.variables_map[(action_name, each_parameter)])
+              conditions_then_gate = self.generate_static_constraints(static_predicate, static_parameter_variables_list)
+              cur_action_variables = self.variables_map[action_name]
+              self.gates_generator.and_gate(cur_action_variables)
+              if_action_gate = self.gates_generator.output_gate
+              # Since positive condition we have if then gate:
+              self.gates_generator.if_then_gate(if_action_gate, conditions_then_gate)
+              predicate_final_gates.append(self.gates_generator.output_gate)
           # Negative precondition constraints:
           self.transition_gates.append(['# Negative preconditions: '])
           if (len(single_predicate_constraints.neg_pre) != 0):
-            self.constraints_generator(single_predicate_constraints.neg_pre, -self.variables_map[static_predicate])
-            predicate_final_gates.append(self.gates_generator.output_gate)
+            for neg_pre in single_predicate_constraints.neg_pre:
+              action_name = neg_pre[0]
+              static_parameter_variables_list = []
+              for each_parameter in neg_pre[1]:
+                static_parameter_variables_list.append(self.variables_map[(action_name, each_parameter)])
+              conditions_then_gate = self.generate_static_constraints(static_predicate, static_parameter_variables_list)
+              cur_action_variables = self.variables_map[action_name]
+              self.gates_generator.and_gate(cur_action_variables)
+              if_action_gate = self.gates_generator.output_gate
+              # Since negative condition we have if then "-"" gate:
+              self.gates_generator.if_then_gate(if_action_gate, -conditions_then_gate)
+              predicate_final_gates.append(self.gates_generator.output_gate)
+          break
       # Add seperator in encoding for better redability:
       self.transition_gates.append(["# ------------------------------------------------------------------------"])
 
@@ -200,6 +245,7 @@ class StronglyConstrainedTransitionFunction:
           self.gates_generator.or_gate([frame_gate, effect_or_gate])
           # Adding frame axiom gate to the predicate final gates:
           predicate_final_gates.append(self.gates_generator.output_gate)
+          break
 
       # Add seperator in encoding for better redability:
       self.transition_gates.append(["# ------------------------------------------------------------------------"])
@@ -247,6 +293,7 @@ class StronglyConstrainedTransitionFunction:
             for i in range(len(self.probleminfo.objects)):
               if (first_parameter == self.probleminfo.objects[i].name):
                 constant_index = i
+                break
             formatted_parameter_variables = self.generate_binary_format(second_parameter_variables, constant_index)
             self.gates_generator.and_gate(formatted_parameter_variables)
           elif ('?' in first_parameter and '?' not in second_parameter):
@@ -257,6 +304,7 @@ class StronglyConstrainedTransitionFunction:
             for i in range(len(self.probleminfo.objects)):
               if (second_parameter == self.probleminfo.objects[i].name):
                 constant_index = i
+                break
             formatted_parameter_variables = self.generate_binary_format(first_parameter_variables, constant_index)
             self.gates_generator.and_gate(formatted_parameter_variables)
           elif('?' in first_parameter and '?' in second_parameter):
@@ -272,6 +320,7 @@ class StronglyConstrainedTransitionFunction:
           self.gates_generator.if_then_gate(cur_action_gate, -output_gate)
           equality_output_gates.append(self.gates_generator.output_gate)
         self.transition_gates.append(["# ------------------------------------------------------------------------"])
+        break
 
     if (len(equality_output_gates) != 0):
       self.transition_gates.append(['# Final Equality output gate: '])
@@ -393,7 +442,6 @@ class StronglyConstrainedTransitionFunction:
     '\n  Action vars: ' + str(self.action_vars) + \
     '\n  Parameter vars: ' + str(self.parameter_variable_list) + \
     '\n  Forall vars: ' + str(self.forall_variables_list) + \
-    '\n  Static vars: ' + str(self.static_variables) + \
     '\n  First non-static vars: ' + str(self.first_non_static_variables) + \
     '\n  Second non-static vars: ' + str(self.second_non_static_variables) + \
     '\n\n  Variables map: \n' + str(self.string_variables_map) + \

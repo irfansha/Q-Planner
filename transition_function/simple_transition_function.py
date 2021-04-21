@@ -70,6 +70,7 @@ class SimpleTransitionFunction:
         for i in range(len(self.probleminfo.objects)):
           if (parameter == self.probleminfo.objects[i].name):
             constant_index = i
+            break
         mapped_forall_variables = self.generate_binary_format(forall_variables, constant_index)
         self.gates_generator.and_gate(mapped_forall_variables)
       else:
@@ -262,6 +263,7 @@ class SimpleTransitionFunction:
             for i in range(len(self.probleminfo.objects)):
               if (first_parameter == self.probleminfo.objects[i].name):
                 constant_index = i
+                break
             formatted_parameter_variables = self.generate_binary_format(second_parameter_variables, constant_index)
             self.gates_generator.and_gate(formatted_parameter_variables)
           elif ('?' in first_parameter and '?' not in second_parameter):
@@ -272,6 +274,7 @@ class SimpleTransitionFunction:
             for i in range(len(self.probleminfo.objects)):
               if (second_parameter == self.probleminfo.objects[i].name):
                 constant_index = i
+                break
             formatted_parameter_variables = self.generate_binary_format(first_parameter_variables, constant_index)
             self.gates_generator.and_gate(formatted_parameter_variables)
           elif('?' in first_parameter and '?' in second_parameter):
@@ -329,8 +332,8 @@ class SimpleTransitionFunction:
     # Generating transition function:
     self.generate_transition_function()
     self.string_transition_gates = ''
-    for gate in self.transition_gates:
-        self.string_transition_gates += str(gate) + "\n"
+    #for gate in self.transition_gates:
+    #    self.string_transition_gates += str(gate) + "\n"
 
     # Compute number of auxilary variables are needed:
     self.num_auxilary_variables = self.final_transition_gate - self.num_main_variables
