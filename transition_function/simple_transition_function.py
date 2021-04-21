@@ -150,6 +150,7 @@ class SimpleTransitionFunction:
           if (len(single_predicate_constraints.neg_pre) != 0):
             self.constraints_generator(single_predicate_constraints.neg_pre, -self.variables_map[static_predicate])
             predicate_final_gates.append(self.gates_generator.output_gate)
+          break
       # Add seperator in encoding for better redability:
       self.transition_gates.append(["# ------------------------------------------------------------------------"])
 
@@ -198,7 +199,7 @@ class SimpleTransitionFunction:
           self.gates_generator.or_gate([frame_gate, effect_or_gate])
           # Adding frame axiom gate to the predicate final gates:
           predicate_final_gates.append(self.gates_generator.output_gate)
-
+          break
       # Add seperator in encoding for better redability:
       self.transition_gates.append(["# ------------------------------------------------------------------------"])
 
@@ -286,6 +287,7 @@ class SimpleTransitionFunction:
           self.gates_generator.if_then_gate(cur_action_gate, -output_gate)
           equality_output_gates.append(self.gates_generator.output_gate)
         self.transition_gates.append(["# ------------------------------------------------------------------------"])
+        break
 
     if (len(equality_output_gates) != 0):
       self.transition_gates.append(['# Final Equality output gate: '])
