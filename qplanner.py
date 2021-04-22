@@ -2,9 +2,7 @@
 
 '''
 TODOS:
-  - We add psuedo-grounded constraints for restricting search space for action variables
-     based on psuedo-grounding of static-predicates.
-  - We also add constraints for forall variables based on predicate types to restrict search space.
+  - Action parameter constraints dummy parameters can be added to simple transition function.
   - Not restricted to static-predicates, we can also add constraints from Initial and
     Goal states directly pruning away first and last actions.
   - Constraints between consecutive action steps can be added based on preconditions
@@ -56,7 +54,8 @@ if __name__ == '__main__':
   parser.add_argument("--solver", type=int, help=textwrap.dedent('''
                                        Solver:
                                        1 = quabs
-                                       2 = caqe'''),default = 2)
+                                       2 = CAQE
+                                       3 = RaReQS'''),default = 2)
   parser.add_argument("--solver_out", help="solver output file",default = 'intermediate_files/solver_output')
   parser.add_argument("--debug", type=int, help="[0/1], default 0" ,default = 0)
   parser.add_argument("--run_tests", type=int, help="[0/1], default 0",default = 0)
@@ -66,6 +65,7 @@ if __name__ == '__main__':
                                        0 = off
                                        1 = bloqqer (version 37)
                                        2 = bloqqer-qdo (version 37)'''),default = 0)
+  parser.add_argument("--preprocessed_encoding_out", help="output preprocessed encoding file",default = 'intermediate_files/preprocessed_encoding')
   parser.add_argument("--time_limit", type=float, help="Solving time limit in seconds, default 1800 seconds",default = 1800)
   parser.add_argument("--preprocessing_time_limit", type=int, help="Preprocessing time limit in seconds, default 900 seconds",default = 900)
   args = parser.parse_args()
@@ -79,9 +79,15 @@ if __name__ == '__main__':
 
   # Cannot extract a plan with simple bloqqer
   # (must use bloqqer-qdo instead):
-  if (args.preprocessing == 1 and args.run == 2):
+  if (args.preprocessing == 1 and args.run == 2 and args.solver == 2):
     print("ERROR: cannot extract plan with bloqqer, use bloqqer-qdo instead")
     exit()
+
+  # Cannot extract a plan with simple bloqqer (only plan existence available):
+  if (args.preprocessing == 1 and args.run == 2 and args.solver == 3):
+    print("ERROR: cannot extract plan with bloqqer, only plan existence")
+    exit()
+
 
   # Run tests include all testcase domains:
   if (args.run_tests == 1):
@@ -132,4 +138,6 @@ if __name__ == '__main__':
 
   # ------------------------------------- Printing memory stats of encodings -----------------------------
   print("Encoding size (in KB): " + str(os.path.getsize(args.encoding_out)/1000))
+  if (args.preprocessing == 1):
+    print("Preprocessed encoding size (in KB): " + str(os.path.getsize(args.preprocessed_encoding_out)/1000))
   # ------------------------------------------------------------------------------------------------------
