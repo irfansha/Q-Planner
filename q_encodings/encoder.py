@@ -25,5 +25,14 @@ def generate_encoding(tfunc):
     # Calling the tool
     os.system(converter_tool_path + ' ' + tfunc.parsed_instance.args.intermediate_encoding_out + ' > ' + tfunc.parsed_instance.args.encoding_out)
 
+  # External preprocessing:
+  if (tfunc.parsed_instance.args.preprocessing == 1):
+    preprocessor_path = os.path.join(tfunc.parsed_instance.args.planner_path, 'tools', 'Bloqqer', 'bloqqer')
+    # Calling the tool:
+    # We preprocess only qdimacs format encoding:
+    assert(tfunc.parsed_instance.args.encoding_format == 2)
+    os.system(preprocessor_path + ' ' + tfunc.parsed_instance.args.encoding_out + ' > ' + tfunc.parsed_instance.args.preprocessed_encoding_out)
+
+
   # Returning encoding for plan extraction:
   return encoding
