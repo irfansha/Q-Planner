@@ -85,8 +85,8 @@ if __name__ == '__main__':
 
   # Cannot extract a plan with simple bloqqer (only plan existence available):
   if (args.preprocessing == 1 and args.run == 2 and args.solver == 3):
-    print("ERROR: cannot extract plan with bloqqer, only plan existence")
-    exit()
+    print("WARNING: cannot extract plan with bloqqer, only plan existence")
+    #exit()
 
 
   # Run tests include all testcase domains:
