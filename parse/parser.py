@@ -20,7 +20,8 @@ class Parse:
     self.lang = self.parsed_problem.language
 
     # Asserting the goal is not already satisfied:
-    assert(self.parsed_problem.init[self.parsed_problem.goal] == False)
+    if(self.parsed_problem.init[self.parsed_problem.goal]):
+      print("problem is trivially true")
 
     self.valid_types = []
     self.valid_actions = []
