@@ -18,9 +18,11 @@ class Parse:
     self.parsed_problem = reader.parse_instance(problem_path)
     # In tarski language is seperated from problem itself:
     self.lang = self.parsed_problem.language
+    self.already_solved = 0
 
     # Asserting the goal is not already satisfied:
     if(self.parsed_problem.init[self.parsed_problem.goal]):
+      self.already_solved = 1
       print("problem is trivially true")
 
     self.valid_types = []

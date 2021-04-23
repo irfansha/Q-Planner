@@ -112,6 +112,10 @@ if __name__ == '__main__':
     parsed_instance.generate_only_nonstatic_predicate_constraints()
     tfunc = sctf(parsed_instance)
 
+  # If the problem is trivially true, we exit:
+  if (parsed_instance.already_solved == 1):
+    exit()
+
   # Printing the transition function is debug is active:
   if (args.debug >= 1):
     print(tfunc)
