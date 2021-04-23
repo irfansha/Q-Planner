@@ -114,6 +114,7 @@ if __name__ == '__main__':
 
   # If the problem is trivially true, we exit:
   if (parsed_instance.already_solved == 1):
+    print("Plan found")
     exit()
 
   # Printing the transition function is debug is active:
