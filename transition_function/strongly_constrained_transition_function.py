@@ -265,6 +265,22 @@ class StronglyConstrainedTransitionFunction:
       # Adding negative of invalid or gates:
       predicate_final_gates.append(-self.invalid_actions_final_gate)
 
+    invalid_parameter_gates = []
+    # Generating negative constraints for impossible parameter values:
+    self.transition_gates.append(['# Invalid parameter gates: '])
+    for parameter_vars in self.parameter_variable_list:
+      for i in range(self.probleminfo.num_objects, self.probleminfo.num_possible_parameter_values):
+        cur_invalid_parameter_vars_list = self.generate_binary_format(parameter_vars, i)
+        self.gates_generator.and_gate(cur_invalid_parameter_vars_list)
+        invalid_parameter_gates.append(self.gates_generator.output_gate)
+
+    # Or gate to check if any one of them is true:
+    if (len(invalid_parameter_gates) != 0):
+      self.gates_generator.or_gate(invalid_parameter_gates)
+      self.invalid_parameters_final_gate = self.gates_generator.output_gate
+      # Adding negative of invalid or gates:
+      predicate_final_gates.append(-self.invalid_parameters_final_gate)
+
 
     equality_output_gates = []
     # TODO: testing needed
