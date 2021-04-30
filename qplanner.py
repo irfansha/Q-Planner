@@ -47,6 +47,12 @@ if __name__ == '__main__':
                                0 = only generate encoding
                                1 = test plan existence
                                2 = extract the plan if found'''),default = 2)
+  parser.add_argument("--invariants", type=int, help=textwrap.dedent('''
+                               Four levels of invariants:
+                               0 = none
+                               1 = inner most invariants (inside forall)
+                               2 = operator invariants (outermost)
+                               3 = both inner and outer invariants, default 0'''), default = 0)
   parser.add_argument("--val_testing", type=int, help="[0/1], default 1", default = 1)
   parser.add_argument("--encoding_format", type=int, help="Encoding format: [1 = QCIR14 2 = QDIMACS], default 2",default = 2)
   parser.add_argument("--encoding_out", help="output encoding file",default = 'intermediate_files/encoding')

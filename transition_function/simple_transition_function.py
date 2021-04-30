@@ -3,6 +3,7 @@
 from constraints.problem_structure import ProblemInfo as pinfo
 from utils.variables_dispatcher import VarDispatcher as vd
 from utils.gates import GatesGen as gg
+from constraints.invariants import Invariants as inv
 
 class SimpleTransitionFunction:
 
@@ -298,8 +299,10 @@ class SimpleTransitionFunction:
       predicate_final_gates.append(self.gates_generator.output_gate)
       self.transition_gates.append(["# ------------------------------------------------------------------------"])
 
-
-
+    # For now only generating inner most invariants when given option 1:
+    if (self.parsed_instance.args.invariants == 1):
+      print("Adding invariant constraints")
+      inv.generate_invariant_constraints(self)
 
     # Generating 'and' gate for all predicate condition gates:
     self.transition_gates.append(['# Final predicate condition "and" gate: '])
