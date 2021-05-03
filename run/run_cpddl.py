@@ -24,7 +24,20 @@ class RunCpddl:
         for split_invariant in split_invariants:
           # further splitting each invaraints for arguments access:
           invariant_split_with_arguments = split_invariant.split(" ")
-          cur_parsed_mutex_group.append(invariant_split_with_arguments)
+          # Other than the first element which is predicate name,
+          # dividing rest of the arguments based on the types of invarints V, C or const:
+          updated_invariant = [invariant_split_with_arguments[0]]
+          for i in range(1, len(invariant_split_with_arguments)):
+            cur_arg = invariant_split_with_arguments[i]
+            # IF ':' is specified, then it is not constant:
+            if (':' in cur_arg):
+              split_cur_arg = cur_arg.split(":")
+              # Using tuple to keep the structure intact:
+              updated_invariant.append(tuple(split_cur_arg))
+            else:
+              # If constant, we explicitly specify it is const type:
+              updated_invariant.append(('const', cur_arg))
+          cur_parsed_mutex_group.append(updated_invariant)
         self.parsed_mutex_groups.append(cur_parsed_mutex_group)
 
 
