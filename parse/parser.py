@@ -26,6 +26,8 @@ class Parse:
       print("problem is trivially true")
 
     self.valid_types = []
+    # better to have something to look up directly for:
+    self.valid_type_names = []
     self.valid_actions = []
 
     # WARNING: Possible problem here,
@@ -78,10 +80,12 @@ class Parse:
       cur_num_objects = len(list(self.lang.get(typ.name).domain()))
       if (cur_num_objects != 0):
         self.valid_types.append(typ)
+        self.valid_type_names.append(typ.name)
     # If debug is true we print the valid types:
     if (self.args.debug >= 1):
       print("#------------------------------------------------------------------------")
       print("VALID TYPES: ", self.valid_types)
+      print("VALID TYPE NAMES: ", self.valid_type_names)
       print("#------------------------------------------------------------------------\n")
 
 
