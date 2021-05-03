@@ -63,10 +63,7 @@ class StronglyConstrainedTransitionFunction:
       if ('?' not in parameter):
         self.transition_gates.append(['# Generating binary constraint for constant parameter ' + str(parameter) + ':'])
         # Finding object position:
-        for i in range(len(self.probleminfo.objects)):
-          if (parameter == self.probleminfo.objects[i].name):
-            constant_index = i
-            break
+        constant_index = self.probleminfo.object_names.index(parameter)
         mapped_forall_variables = self.generate_binary_format(forall_variables, constant_index)
         self.gates_generator.and_gate(mapped_forall_variables)
       else:
@@ -136,12 +133,10 @@ class StronglyConstrainedTransitionFunction:
           subterm = atom.subterms[i]
           cur_variables = parameter_variable_list[i]
           # Finding object index:
-          for obj_index in range(len(self.probleminfo.objects)):
-            if (subterm.name == self.probleminfo.objects[obj_index].name):
-              gate_variables = self.generate_binary_format(cur_variables, obj_index)
-              self.gates_generator.and_gate(gate_variables)
-              single_instance_gates.append(self.gates_generator.output_gate)
-              break
+          obj_index = self.probleminfo.object_names.index(subterm.name)
+          gate_variables = self.generate_binary_format(cur_variables, obj_index)
+          self.gates_generator.and_gate(gate_variables)
+          single_instance_gates.append(self.gates_generator.output_gate)
         self.gates_generator.and_gate(single_instance_gates)
         list_obj_instances.append(self.gates_generator.output_gate)
     # Finally an or gates for all the instances:
@@ -306,10 +301,7 @@ class StronglyConstrainedTransitionFunction:
             second_parameter_variables = self.variables_map[(action_name, second_parameter)]
             self.transition_gates.append(['# Generating binary constraint for second parameter because of first constant parameter:'])
             # Finding object position:
-            for i in range(len(self.probleminfo.objects)):
-              if (first_parameter == self.probleminfo.objects[i].name):
-                constant_index = i
-                break
+            constant_index = self.probleminfo.object_names.index(first_parameter)
             formatted_parameter_variables = self.generate_binary_format(second_parameter_variables, constant_index)
             self.gates_generator.and_gate(formatted_parameter_variables)
           elif ('?' in first_parameter and '?' not in second_parameter):
@@ -317,10 +309,7 @@ class StronglyConstrainedTransitionFunction:
             second_parameter_variables = []
             self.transition_gates.append(['# Generating binary constraint for first parameter because of second constant parameter:'])
             # Finding object position:
-            for i in range(len(self.probleminfo.objects)):
-              if (second_parameter == self.probleminfo.objects[i].name):
-                constant_index = i
-                break
+            constant_index = self.probleminfo.object_names.index(second_parameter)
             formatted_parameter_variables = self.generate_binary_format(first_parameter_variables, constant_index)
             self.gates_generator.and_gate(formatted_parameter_variables)
           elif('?' in first_parameter and '?' in second_parameter):
@@ -365,12 +354,7 @@ class StronglyConstrainedTransitionFunction:
         single_type_output_gates = []
         for obj in cur_objects:
           # Finding object position:
-          object_index = -1
-          # Perhaps can be made easy with index functions:
-          for i in range(len(self.probleminfo.objects)):
-            if (obj.name == self.probleminfo.objects[i].name):
-              object_index = i
-              break
+          object_index = self.probleminfo.object_names.index(obj.name)
           formatted_obj_variables = self.generate_binary_format(self.variables_map[(action_name, parameter.symbol)], object_index)
           self.gates_generator.and_gate(formatted_obj_variables)
           single_type_output_gates.append(self.gates_generator.output_gate)

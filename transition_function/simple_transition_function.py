@@ -64,14 +64,10 @@ class SimpleTransitionFunction:
     for i in range(len(parameters)):
       parameter = parameters[i]
       forall_variables = self.forall_variables_list[i]
-      # TODO: handle if a parameter is constant:
       if ('?' not in parameter):
         self.transition_gates.append(['# Generating binary constraint for constant parameter ' + str(parameter) + ':'])
         # Finding object position:
-        for i in range(len(self.probleminfo.objects)):
-          if (parameter == self.probleminfo.objects[i].name):
-            constant_index = i
-            break
+        constant_index = self.probleminfo.object_names.index(parameter)
         mapped_forall_variables = self.generate_binary_format(forall_variables, constant_index)
         self.gates_generator.and_gate(mapped_forall_variables)
       else:
@@ -261,10 +257,7 @@ class SimpleTransitionFunction:
             second_parameter_variables = self.variables_map[(action_name, second_parameter)]
             self.transition_gates.append(['# Generating binary constraint for second parameter because of first constant parameter:'])
             # Finding object position:
-            for i in range(len(self.probleminfo.objects)):
-              if (first_parameter == self.probleminfo.objects[i].name):
-                constant_index = i
-                break
+            constant_index = self.probleminfo.object_names.index(first_parameter)
             formatted_parameter_variables = self.generate_binary_format(second_parameter_variables, constant_index)
             self.gates_generator.and_gate(formatted_parameter_variables)
           elif ('?' in first_parameter and '?' not in second_parameter):
@@ -272,10 +265,7 @@ class SimpleTransitionFunction:
             second_parameter_variables = []
             self.transition_gates.append(['# Generating binary constraint for first parameter because of second constant parameter:'])
             # Finding object position:
-            for i in range(len(self.probleminfo.objects)):
-              if (second_parameter == self.probleminfo.objects[i].name):
-                constant_index = i
-                break
+            constant_index = self.probleminfo.object_names.index(second_parameter)
             formatted_parameter_variables = self.generate_binary_format(first_parameter_variables, constant_index)
             self.gates_generator.and_gate(formatted_parameter_variables)
           elif('?' in first_parameter and '?' in second_parameter):

@@ -97,12 +97,10 @@ class StronglyConstrainedEncoding:
           subterm = atom.subterms[i]
           cur_variables = self.forall_variables_list[i]
           # Finding object index:
-          for obj_index in range(len(self.tfunc.probleminfo.objects)):
-            if (subterm.name == self.tfunc.probleminfo.objects[obj_index].name):
-              gate_variables = self.tfunc.generate_binary_format(cur_variables, obj_index)
-              self.gates_generator.and_gate(gate_variables)
-              single_instance_gates.append(self.gates_generator.output_gate)
-              break
+          obj_index = self.tfunc.probleminfo.object_names.index(subterm.name)
+          gate_variables = self.tfunc.generate_binary_format(cur_variables, obj_index)
+          self.gates_generator.and_gate(gate_variables)
+          single_instance_gates.append(self.gates_generator.output_gate)
         self.gates_generator.and_gate(single_instance_gates)
         list_obj_instances.append(self.gates_generator.output_gate)
     # Finally an or gates for all the instances:
@@ -178,12 +176,10 @@ class StronglyConstrainedEncoding:
           subterm = cur_atom.subterms[i]
           cur_variables = self.forall_variables_list[i]
           # Finding object index:
-          for obj_index in range(len(self.tfunc.probleminfo.objects)):
-            if (subterm.name == self.tfunc.probleminfo.objects[obj_index].name):
-              gate_variables = self.tfunc.generate_binary_format(cur_variables, obj_index)
-              self.gates_generator.and_gate(gate_variables)
-              single_instance_gates.append(self.gates_generator.output_gate)
-              break
+          obj_index = self.tfunc.probleminfo.object_names.index(subterm.name)
+          gate_variables = self.tfunc.generate_binary_format(cur_variables, obj_index)
+          self.gates_generator.and_gate(gate_variables)
+          single_instance_gates.append(self.gates_generator.output_gate)
         # We only generate of some instantiation occurs:
         if (len(single_instance_gates) != 0):
           self.gates_generator.and_gate(single_instance_gates)
@@ -268,10 +264,8 @@ class StronglyConstrainedEncoding:
       obj_list = list(self.tfunc.parsed_instance.lang.get(tp.name).domain())
       obj_index_list = []
       for obj in obj_list:
-        for i in range(len(self.tfunc.probleminfo.objects)):
-          if (obj.name == self.tfunc.probleminfo.objects[i].name):
-            obj_index_list.append(i)
-            break
+        obj_index = self.tfunc.probleminfo.object_names.index(obj.name)
+        obj_index_list.append(obj_index)
       obj_index_list.sort()
       obj_type_index[tp] = obj_index_list
 
