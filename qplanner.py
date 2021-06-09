@@ -2,12 +2,11 @@
 
 '''
 TODOS:
-  - Action parameter constraints dummy parameters can be added to simple transition function.
+  - Use bit blasting for invalid action and parameter clauses
   - Not restricted to static-predicates, we can also add constraints from Initial and
     Goal states directly pruning away first and last actions.
   - Constraints between consecutive action steps can be added based on preconditions
     and effects something similar to mutex-op.
-  - Seems direct mutex operators are available, need to check if useful.
   - Invariants seem useful (intuitively), can be added both at existence level and for universal layer.
   - Conditional constraints on forall vars seem to work, perhaps simpler constraints might work best.
   - Conditional effects might be perfect for our encoding, might be efficient than other approaches.
