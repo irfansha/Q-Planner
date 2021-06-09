@@ -201,6 +201,8 @@ class SimpleTransitionFunction:
       # Add seperator in encoding for better redability:
       self.transition_gates.append(["# ------------------------------------------------------------------------"])
 
+
+    # TODO: Use logarithmic gates for avoding invalid actions/parameters:
     invalid_action_gates = []
     # Generating negative constraints for impossible actions, ignore noop action:
     self.transition_gates.append(['# Invalid action gates: '])
