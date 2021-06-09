@@ -4,6 +4,8 @@ from constraints.problem_structure import ProblemInfo as pinfo
 from utils.variables_dispatcher import VarDispatcher as vd
 from utils.gates import GatesGen as gg
 from constraints.invariants import Invariants as inv
+import utils.lessthen_cir as lsc
+import math
 
 class SimpleTransitionFunction:
 
@@ -202,22 +204,18 @@ class SimpleTransitionFunction:
       self.transition_gates.append(["# ------------------------------------------------------------------------"])
 
 
-    # TODO: Use logarithmic gates for avoding invalid actions/parameters:
-    invalid_action_gates = []
     # Generating negative constraints for impossible actions, ignore noop action:
-    self.transition_gates.append(['# Invalid action gates: '])
-    for i in range(self.probleminfo.num_valid_actions + 1, self.probleminfo.num_possible_actions):
-      cur_invalid_action_vars_list = self.generate_binary_format(self.action_vars, i)
-      self.gates_generator.and_gate(cur_invalid_action_vars_list)
-      invalid_action_gates.append(self.gates_generator.output_gate)
+    if (not math.log2(self.probleminfo.num_valid_actions+1).is_integer()):
+      self.transition_gates.append(['# Invalid action gates: '])
+      lsc.add_circuit(self.gates_generator, self.action_vars, self.probleminfo.num_valid_actions + 1)
+      predicate_final_gates.append(self.gates_generator.output_gate)
+    #print(self.gates_generator.output_gate)
+    #for i in range(self.probleminfo.num_valid_actions + 1, self.probleminfo.num_possible_actions):
+    #  cur_invalid_action_vars_list = self.generate_binary_format(self.action_vars, i)
+    #  self.gates_generator.and_gate(cur_invalid_action_vars_list)
+    #  invalid_action_gates.append(self.gates_generator.output_gate)
 
-    # Or gate to check if any one of them is true:
-    if (len(invalid_action_gates) != 0):
-      self.gates_generator.or_gate(invalid_action_gates)
-      self.invalid_actions_final_gate = self.gates_generator.output_gate
-      # Adding negative of invalid or gates:
-      predicate_final_gates.append(-self.invalid_actions_final_gate)
-
+    # TODO: Use logarithmic gates for avoding invalid parameters:
     invalid_parameter_gates = []
     # Generating negative constraints for impossible parameter values:
     self.transition_gates.append(['# Invalid parameter gates: '])
