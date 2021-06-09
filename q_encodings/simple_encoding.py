@@ -3,6 +3,8 @@
 from utils.variables_dispatcher import VarDispatcher as vd
 from utils.gates import GatesGen as gg
 from tarski.syntax import formulas as fr
+import math
+import utils.lessthen_cir as lsc
 
 '''
 WARNING: It is possible that empty or gates might cause some problem,
@@ -393,15 +395,14 @@ class SimpleEncoding:
     # All conditional output gates:
     all_conditional_output_gates = []
 
-    for cur_variables in self.forall_variables_list:
-      for i in range(self.tfunc.probleminfo.num_objects, self.tfunc.probleminfo.num_possible_parameter_values):
-        cur_invalid_forall_vars_list = self.tfunc.generate_binary_format(cur_variables, i)
-        self.gates_generator.and_gate(cur_invalid_forall_vars_list)
+    if (not math.log2(self.tfunc.probleminfo.num_objects).is_integer()):
+      for cur_variables in self.forall_variables_list:
+        lsc.add_circuit(self.gates_generator, cur_variables, self.tfunc.probleminfo.num_objects)
         all_conditional_output_gates.append(self.gates_generator.output_gate)
 
     self.encoding.append(['# Final conditional gate: '])
-    self.gates_generator.or_gate(all_conditional_output_gates)
-    self.conditional_final_output_gate = -self.gates_generator.output_gate
+    self.gates_generator.and_gate(all_conditional_output_gates)
+    self.conditional_final_output_gate = self.gates_generator.output_gate
     self.encoding.append(["# ------------------------------------------------------------------------"])
 
 
