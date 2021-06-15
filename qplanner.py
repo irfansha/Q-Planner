@@ -24,6 +24,8 @@ import q_encodings.encoder as ge
 from transition_function.simple_transition_function import SimpleTransitionFunction as stf
 from transition_function.strongly_constrained_transition_function import StronglyConstrainedTransitionFunction as sctf
 import run.run_solver as rs
+import subprocess
+import datetime
 
 
 # Main:
@@ -77,6 +79,12 @@ if __name__ == '__main__':
   args = parser.parse_args()
 
 
+  label = subprocess.check_output(["git", "describe", "--always"]).strip()
+
+
+  print("Start time: " + str(datetime.datetime.now()))
+
+  print("Git commit hash: " + str(label))
 
   print(args)
 
@@ -152,3 +160,6 @@ if __name__ == '__main__':
   if (args.preprocessing == 1):
     print("Preprocessed encoding size (in KB): " + str(os.path.getsize(args.preprocessed_encoding_out)/1000))
   # ------------------------------------------------------------------------------------------------------
+
+
+  print("Finish time: " + str(datetime.datetime.now()))
