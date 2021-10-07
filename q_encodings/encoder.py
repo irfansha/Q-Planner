@@ -2,6 +2,7 @@
 
 from q_encodings.simple_encoding import SimpleEncoding as se
 from q_encodings.strongly_constrained_encoding import StronglyConstrainedEncoding as sce
+from q_encodings.log_encoding import LogEncoding as le
 import os
 
 # TODO: add time stamps to the encoding and outputs:
@@ -13,17 +14,25 @@ def generate_encoding(tfunc):
   elif (tfunc.parsed_instance.args.e == 'sc-UE'):
     print("Generating strongly constrained ungrounded encoding")
     encoding = sce(tfunc)
+  elif (tfunc.parsed_instance.args.e == 'l-UE'):
+    print("Generating log ungrounded encoding (DQBF)")
+    encoding = le(tfunc)
 
   # We print QCIR format directly to the file:
   if (tfunc.parsed_instance.args.encoding_format == 1):
     encoding.print_encoding_tofile(tfunc.parsed_instance.args.encoding_out)
-  else:
+  elif (tfunc.parsed_instance.args.encoding_format == 2):
     # For QDIMACS, we write the encoding to an intermediate file and change
     # to right format:
     encoding.print_encoding_tofile(tfunc.parsed_instance.args.intermediate_encoding_out)
     converter_tool_path = os.path.join(tfunc.parsed_instance.args.planner_path, 'tools', 'qcir_to_dimacs_convertor' , 'qcir2qdimacs')
     # Calling the tool
     os.system(converter_tool_path + ' ' + tfunc.parsed_instance.args.intermediate_encoding_out + ' > ' + tfunc.parsed_instance.args.encoding_out)
+  # For now only dqcir is generated:
+  elif (tfunc.parsed_instance.args.encoding_format == 3):
+    encoding.print_encoding_tofile(tfunc.parsed_instance.args.encoding_out)
+  else:
+    print("Encoding not available yet!")
 
   # External preprocessing:
   if (tfunc.parsed_instance.args.preprocessing == 1):

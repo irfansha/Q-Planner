@@ -2,17 +2,8 @@
 
 '''
 TODOS:
-  - Use bit blasting for invalid action and parameter clauses
-  - Not restricted to static-predicates, we can also add constraints from Initial and
-    Goal states directly pruning away first and last actions.
-  - Constraints between consecutive action steps can be added based on preconditions
-    and effects something similar to mutex-op.
-  - Invariants seem useful (intuitively), can be added both at existence level and for universal layer.
-  - Conditional constraints on forall vars seem to work, perhaps simpler constraints might work best.
-  - Conditional effects might be perfect for our encoding, might be efficient than other approaches.
+  - New DQBF encoding for planning which is logarithmic in every aspect.
   - Ingore action costs and run the domains,seems to include many difficult domains that way.
-  - We do not need k copies of non-static variables instead we can use the universal variables to
-    "simulate" k steps with single transition function reducing encoding size -- worth investigating.
 '''
 
 import os
@@ -41,8 +32,9 @@ if __name__ == '__main__':
   parser.add_argument("--plan_length", type=int,default = 4)
   parser.add_argument("-e", help=textwrap.dedent('''
                                   encoding types:
-                                  s-UE = Simple Ungrounded Encoding
-                                  sc-UE = Strongly Constrained Ungrounded Encoding'''),default = 's-UE')
+                                  s-UE = Simple Ungrounded Encoding (default)
+                                  sc-UE = Strongly Constrained Ungrounded Encoding
+                                  l-UE = Logarithmic Ungrounded Encoding (DQBF)'''),default = 's-UE')
   parser.add_argument("--run", type=int, help=textwrap.dedent('''
                                Three levels of execution:
                                0 = only generate encoding
@@ -56,7 +48,12 @@ if __name__ == '__main__':
                                3 = both inner and outer invariants, default 0'''), default = 0)
   parser.add_argument("--invariants_out", help="output invariants file",default = 'intermediate_files/invariants')
   parser.add_argument("--val_testing", type=int, help="[0/1], default 1", default = 1)
-  parser.add_argument("--encoding_format", type=int, help="Encoding format: [1 = QCIR14 2 = QDIMACS], default 2",default = 2)
+  parser.add_argument("--encoding_format", type=int, help=textwrap.dedent('''
+                                       Encoding format:
+                                       1 = QCIR14
+                                       2 = QDIMACS (default)
+                                       3 = DQCIR
+                                       4 = DQDIMACS'''),default = 2)
   parser.add_argument("--encoding_out", help="output encoding file",default = 'intermediate_files/encoding')
   parser.add_argument("--intermediate_encoding_out", help="output intermediate encoding file",default = 'intermediate_files/intermediate_encoding')
   parser.add_argument("--solver", type=int, help=textwrap.dedent('''
@@ -118,7 +115,7 @@ if __name__ == '__main__':
 
   # Instead of action specific constraints,
   # predicate specific constraints are generated:
-  if (args.e == 's-UE'):
+  if (args.e == 's-UE' or args.e == 'l-UE'):
     parsed_instance.generate_predicate_constraints()
     # Generating simple transition function:
     tfunc = stf(parsed_instance)
@@ -135,7 +132,6 @@ if __name__ == '__main__':
   if (args.debug >= 1):
     print(tfunc)
 
-  # TODO: Add new encoding generator module, and a new simple encoding module
   encoding = ge.generate_encoding(tfunc)
 
   # TODO: Add new strongly constrained encoding module

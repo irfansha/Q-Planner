@@ -1,4 +1,4 @@
-# Irfansha Shaik, 10.04.2021, Aarhus.
+# Irfansha Shaik, 07.10.2021, Linz.
 
 from utils.variables_dispatcher import VarDispatcher as vd
 from utils.gates import GatesGen as gg
@@ -6,12 +6,8 @@ from tarski.syntax import formulas as fr
 import math
 import utils.lessthen_cir as lsc
 
-'''
-WARNING: It is possible that empty or gates might cause some problem,
-not sure but better to check in testing
-'''
 
-class SimpleEncoding:
+class LogEncoding:
 
   def print_gate_tofile(self, gate, f):
     if len(gate) == 1:
@@ -29,63 +25,143 @@ class SimpleEncoding:
 
   # Generates quanifier blocks:
   def generate_quantifier_blocks(self):
-    # Action and parameter variables are first existential layer:
-    first_layer_variables = []
-    self.quantifier_block.append(['# Action and parameter variables :'])
-    for i in range(self.tfunc.parsed_instance.args.plan_length):
-      self.quantifier_block.append(['# Time step ' + str(i) + ' :'])
-      self.quantifier_block.append(['# ' + str(self.action_variables[i])])
-      self.quantifier_block.append(['# ' + str(self.parameter_variables[i])])
-      first_layer_variables.extend(self.action_variables[i])
-      for j in range(len(self.parameter_variables[i])):
-        first_layer_variables.extend(self.parameter_variables[i][j])
-    self.quantifier_block.append(['exists(' + ', '.join(str(x) for x in first_layer_variables) + ')'])
 
-    # Object variables are second forall layer:
-    second_layer_variables = []
+    # forall object combination variables:
+    all_forall_variables = []
     self.quantifier_block.append(['# Forall object variables :'])
     self.quantifier_block.append(['# ' + str(self.forall_variables_list)])
     for i in range(len(self.forall_variables_list)):
-      second_layer_variables.extend(self.forall_variables_list[i])
-    self.quantifier_block.append(['forall(' + ', '.join(str(x) for x in second_layer_variables) + ')'])
+      all_forall_variables.extend(self.forall_variables_list[i])
+    self.quantifier_block.append(['forall(' + ', '.join(str(x) for x in all_forall_variables) + ')'])
 
-    # Predicate variables are third existential layer:
-    third_layer_variables = []
+    # Inital, goal non-static predicate variables and static variables which only depend on object combination variables:
+    all_outside_predicate_variables = []
+
+    self.quantifier_block.append(['# initial non-static predicate variables :'])
+    self.quantifier_block.append(['# ' + str(self.inital_non_static_variables)])
+    all_outside_predicate_variables.extend(self.inital_non_static_variables)
+
+    self.quantifier_block.append(['# goal non-static predicate variables :'])
+    self.quantifier_block.append(['# ' + str(self.goal_non_static_variables)])
+    all_outside_predicate_variables.extend(self.goal_non_static_variables)
 
     self.quantifier_block.append(['# static predicate variables :'])
     self.quantifier_block.append(['# ' + str(self.static_variables)])
-    third_layer_variables.extend(self.static_variables)
-    self.quantifier_block.append(['# non-static predicate variables :'])
-    for i in range(self.tfunc.parsed_instance.args.plan_length + 1):
-      self.quantifier_block.append(['# ' + str(self.non_static_variables[i])])
-      third_layer_variables.extend(self.non_static_variables[i])
-    self.quantifier_block.append(['exists(' + ', '.join(str(x) for x in third_layer_variables) + ')'])
+    all_outside_predicate_variables.extend(self.static_variables)
+    self.quantifier_block.append(['exists(' + ', '.join(str(x) for x in all_outside_predicate_variables) + ')'])
 
-  def generate_k_transitions(self):
+    # All layers of non-static predicates:
+
+    self.quantifier_block.append(['# non-static predicate variables and forall path variables:'])
+    for i in range(self.plan_depth):
+      self.quantifier_block.append(['# Layer ' + str(i) + ':'])
+      self.quantifier_block.append(['exists(' + ', '.join(str(x) for x in self.non_static_variables[3*i]) + ')'])
+      self.quantifier_block.append(['forall(' + str(self.forall_path_variables[i]) + ')'])
+      self.quantifier_block.append(['exists(' + ', '.join(str(x) for x in self.non_static_variables[3*i + 1]) + ')'])
+      self.quantifier_block.append(['exists(' + ', '.join(str(x) for x in self.non_static_variables[3*i + 2]) + ')'])
+
+    # action variables with only forall path variable dependencies:
+    all_action_variables = []
+    self.quantifier_block.append(['# Action and parameter variables :'])
+    self.quantifier_block.append(['# ' + str(self.action_variables)])
+    self.quantifier_block.append(['# ' + str(self.parameter_variables)])
+    all_action_variables.extend(self.action_variables)
+    for j in range(len(self.parameter_variables)):
+      all_action_variables.extend(self.parameter_variables[j])
+
+    # Specifying dependencies on forall path variables for action variables:
+    for var in all_action_variables:
+      dep_var_list = [var]
+      dep_var_list.extend(self.forall_path_variables)
+      self.quantifier_block.append(['depend(' + ', '.join(str(x) for x in dep_var_list) + ')'])
+
+
+  # only one transition for DQBF:
+  def generate_transition_function(self):
     # Generating transition function for each step:
-    for i in range(self.tfunc.parsed_instance.args.plan_length):
-      self.encoding.append(['# Transition funciton for step ' + str(i) + ':'])
-      # Generating auxilary vars:
-      step_aux_vars = self.encoding_variables.get_vars(self.tfunc.num_auxilary_variables)
-      # Appending transition output gates:
-      self.transition_step_output_gates.append(step_aux_vars[-1])
-      # Appending all variables required for one time step:
-      all_vars = []
-      all_vars.extend(self.action_variables[i])
-      # Parameter variables:
-      for j in range(len(self.parameter_variables[i])):
-        all_vars.extend(self.parameter_variables[i][j])
-      # Forall variables:
-      for j in range(len(self.forall_variables_list)):
-        all_vars.extend(self.forall_variables_list[j])
-      # Static predicate variables:
-      all_vars.extend(self.static_variables)
-      # i, i+1 th non-static predicates:
-      all_vars.extend(self.non_static_variables[i])
-      all_vars.extend(self.non_static_variables[i+1])
-      # Auxilary variables:
-      all_vars.extend(step_aux_vars)
-      self.tfunc.new_transition_copy(all_vars, self.encoding)
+    self.encoding.append(['# Transition funciton for step between last two predicate sets:'])
+    # Generating auxilary vars:
+    aux_vars = self.encoding_variables.get_vars(self.tfunc.num_auxilary_variables)
+    # Appending transition output gates:
+    self.transition_output_gate = aux_vars[-1]
+    # Appending all variables required for one time step:
+    all_vars = []
+    all_vars.extend(self.action_variables)
+    # Parameter variables:
+    for j in range(len(self.parameter_variables)):
+      all_vars.extend(self.parameter_variables[j])
+    # Forall variables:
+    for j in range(len(self.forall_variables_list)):
+      all_vars.extend(self.forall_variables_list[j])
+    # Static predicate variables:
+    all_vars.extend(self.static_variables)
+    # second last and last non-static predicates:
+    all_vars.extend(self.non_static_variables[-2])
+    all_vars.extend(self.non_static_variables[-1])
+    # Auxilary variables:
+    all_vars.extend(aux_vars)
+    self.tfunc.new_transition_copy(all_vars, self.encoding)
+
+  def generate_equality_clauses_between_layers(self):
+    layer_equality_step_output_gates = []
+    # Generating equality constraints for zero layer:
+    self.encoding.append(["# ------------------------------------------------------------------------"])
+    self.encoding.append(['# Constraints in zero layer, connecting with start and end non-static predicate variables :'])
+    self.encoding.append(['# Equality clause between P1 and START positons: '])
+    self.gates_generator.complete_equality_gate(self.non_static_variables[1], self.inital_non_static_variables)
+    temp_first_equality_output_gate = self.gates_generator.output_gate
+
+    self.encoding.append(['# Equality clause between P2 and P0 non-static predicates: '])
+    self.gates_generator.complete_equality_gate(self.non_static_variables[2], self.non_static_variables[0])
+    temp_second_equality_output_gate = self.gates_generator.output_gate
+
+    self.encoding.append(['# if then for negative forall 0 variable and conjunction of two equality gates: '])
+    self.gates_generator.if_then_gate(-self.forall_path_variables[0], [temp_first_equality_output_gate, temp_second_equality_output_gate])
+    layer_equality_step_output_gates.append(self.gates_generator.output_gate)
+
+    self.encoding.append(['# Equality clause between P1 and P0 non-static predicates: '])
+    self.gates_generator.complete_equality_gate(self.non_static_variables[1], self.non_static_variables[0])
+    temp_first_equality_output_gate = self.gates_generator.output_gate
+
+    self.encoding.append(['# Equality clause between P2 and goal non-static predicates: '])
+    self.gates_generator.complete_equality_gate(self.non_static_variables[2], self.goal_non_static_variables)
+    temp_second_equality_output_gate = self.gates_generator.output_gate
+
+    self.encoding.append(['# if then for positive forall 0 variable and conjunction of two equality gates: '])
+    self.gates_generator.if_then_gate(self.forall_path_variables[0], [temp_first_equality_output_gate, temp_second_equality_output_gate])
+    layer_equality_step_output_gates.append(self.gates_generator.output_gate)
+
+    # For each layer until plan depth, generate equality clauses:
+    for i in range(1,self.plan_depth):
+      self.encoding.append(['# Constraints in ' + str(i) + 'th layer, connecting with start and end non-static predicates :'])
+      self.encoding.append(['# Equality clause between P' + str(3*i) + ' and P' + str((3*i)+2) + ' non-static predicates: '])
+      self.gates_generator.complete_equality_gate(self.non_static_variables[3*i], self.non_static_variables[(3*i) + 2])
+      temp_first_equality_output_gate = self.gates_generator.output_gate
+
+      self.encoding.append(['# Equality clause between P' + str((3*i)+1) + ' and P' + str((3*i)-2) + ' non-static predicates: '])
+      self.gates_generator.complete_equality_gate(self.non_static_variables[(3*i)+1], self.non_static_variables[(3*i)-2])
+      temp_second_equality_output_gate = self.gates_generator.output_gate
+
+      self.encoding.append(['# if then for negative forall ' + str(i) + ' variable and conjunction of two equality gates: '])
+      self.gates_generator.if_then_gate(-self.forall_path_variables[i], [temp_first_equality_output_gate, temp_second_equality_output_gate])
+      layer_equality_step_output_gates.append(self.gates_generator.output_gate)
+
+      self.encoding.append(['# Equality clause between P' + str(3*i) + ' and P' + str((3*i)+1) + ' positons: '])
+      self.gates_generator.complete_equality_gate(self.non_static_variables[3*i], self.non_static_variables[(3*i) + 1])
+      temp_first_equality_output_gate = self.gates_generator.output_gate
+
+      self.encoding.append(['# Equality clause between P' + str((3*i)+2) + ' and P' + str((3*i)-1) + ' positons: '])
+      self.gates_generator.complete_equality_gate(self.non_static_variables[(3*i)+2], self.non_static_variables[(3*i)-1])
+      temp_second_equality_output_gate = self.gates_generator.output_gate
+
+      self.encoding.append(['# if then for positive forall ' + str(i) + ' variable and conjunction of two equality gates: '])
+      self.gates_generator.if_then_gate(self.forall_path_variables[i], [temp_first_equality_output_gate, temp_second_equality_output_gate])
+      layer_equality_step_output_gates.append(self.gates_generator.output_gate)
+
+    # Finally a conjunction of all the layer equalities:
+    self.encoding.append(['# Final and gate for equality constraints: '])
+    self.gates_generator.and_gate(layer_equality_step_output_gates)
+    self.layer_equality_output_gate = self.gates_generator.output_gate
 
   # Finds object instantiations of a predicate and computes or-of-and gate:
   def generate_initial_predicate_constraints(self, predicate):
@@ -110,7 +186,6 @@ class SimpleEncoding:
     self.gates_generator.or_gate(list_obj_instances)
     return self.gates_generator.output_gate
 
-  # TODO: Testing is needed
   def generate_initial_gate(self):
     initial_step_output_gates = []
 
@@ -161,8 +236,8 @@ class SimpleEncoding:
       single_predicate_final_gate = self.generate_initial_predicate_constraints(non_static_predicate)
       # Fetching corresponding non-static variable
       self.encoding.append(['# iff condition for the predicate '])
-      # We look at the initial state, so 0th index predicates:
-      cur_nonstatic_variable = self.non_static_variables[0][self.tfunc.probleminfo.non_static_predicates.index(non_static_predicate)]
+      # We look at the initial state, so we consider intial state non-state variables:
+      cur_nonstatic_variable = self.inital_non_static_variables[self.tfunc.probleminfo.non_static_predicates.index(non_static_predicate)]
       self.gates_generator.single_equality_gate(single_predicate_final_gate, cur_nonstatic_variable)
       initial_step_output_gates.append(self.gates_generator.output_gate)
 
@@ -254,8 +329,8 @@ class SimpleEncoding:
       [pos_gate, neg_gate, zero_var] = self.generate_goal_predicate_constraints(non_static_predicate)
 
       # Fetching corresponding non-static variable
-      # We look at the goal state, so plan length index predicates:
-      cur_nonstatic_variable = self.non_static_variables[self.tfunc.parsed_instance.args.plan_length][self.tfunc.probleminfo.non_static_predicates.index(non_static_predicate)]
+      # We look at the goal state, so corresponding non static variables:
+      cur_nonstatic_variable = self.goal_non_static_variables[self.tfunc.probleminfo.non_static_predicates.index(non_static_predicate)]
 
       if (pos_gate != 0):
         # positive if condition:
@@ -283,143 +358,17 @@ class SimpleEncoding:
     self.gates_generator.and_gate(goal_step_output_gates)
     self.goal_output_gate = self.gates_generator.output_gate
 
-  # TODO: We might be over-engineering, might work well for strongly constrained
-  # transition function:
-  def generate_restricted_forall_constraints(self):
-
-    self.encoding.append(["# ------------------------------------------------------------------------"])
-    self.encoding.append(['# Conditional forall constraints: '])
-
-    # All conditional output gates:
-    all_conditional_output_gates = []
-
-    # Generating an object type index, where object type is the key
-    # and all the object indexs of that types is the value list:
-    obj_type_index = dict()
-
-    # For each type we look at the set of objects with same type and add
-    # it into out dictionary as indexes:
-    for tp in self.tfunc.parsed_instance.lang.sorts:
-      obj_list = list(self.tfunc.parsed_instance.lang.get(tp.name).domain())
-      obj_index_list = []
-      for obj in obj_list:
-        obj_index = self.tfunc.probleminfo.object_names.index(obj.name)
-        obj_index_list.append(obj_index)
-      obj_index_list.sort()
-      obj_type_index[tp] = obj_index_list
-
-    # we do not want to iterate through again:
-    local_valid_type_names_list = []
-    # Since variables for types always have one parameter,
-    # we choose first set of forall variables:
-    cur_variables = self.forall_variables_list[0]
-    # Constraint for types:
-    for valid_type in self.tfunc.parsed_instance.valid_types:
-      single_type_output_gates = []
-      # We consider only static predicate types:
-      local_valid_type_names_list.append(valid_type.name)
-      # gathering all the types for or gate:
-      cur_gates = []
-      # if there are no objects, we ignore:
-      if(len(obj_type_index[valid_type]) == 0):
-        continue
-      # Generating conditional clauses:
-      self.encoding.append(['# Conditional for type ' + str(valid_type.name) + ': '])
-      for valid_index in obj_type_index[valid_type]:
-        gate_variables = self.tfunc.generate_binary_format(cur_variables, valid_index)
-        self.gates_generator.and_gate(gate_variables)
-        cur_gates.append(self.gates_generator.output_gate)
-      self.encoding.append(['# Overall or gate for all possiblities: '])
-      self.gates_generator.or_gate(cur_gates)
-      single_type_output_gates.append(self.gates_generator.output_gate)
-      # We need to restrict the other position forall variables for speed up:
-      for i in range(1, self.tfunc.probleminfo.max_predicate_parameters):
-        temp_forall_variables = self.forall_variables_list[i]
-        # We go with first object by default, nothing special:
-        self.encoding.append(['# restricted object clause: '])
-        gate_variables = self.tfunc.generate_binary_format(temp_forall_variables, 0)
-        self.gates_generator.and_gate(gate_variables)
-        single_type_output_gates.append(self.gates_generator.output_gate)
-      self.encoding.append(['# And gate for all parameters of single type: '])
-      self.gates_generator.and_gate(single_type_output_gates)
-      all_conditional_output_gates.append(self.gates_generator.output_gate)
-    #print(all_conditional_output_gates)
-
-    # Perhaps easier to just go through all the predicates at once:
-    all_valid_predicates = []
-    all_valid_predicates.extend(self.tfunc.probleminfo.static_predicates)
-    all_valid_predicates.extend(self.tfunc.probleminfo.non_static_predicates)
-
-    # Adding constraints for the forall variables based on predicates:
-    for predicate in all_valid_predicates:
-      if (predicate not in local_valid_type_names_list):
-        self.encoding.append(['# Conditional for predicate ' + str(predicate) + ': '])
-        cur_parameter_types = self.tfunc.parsed_instance.lang.get(predicate).sort
-        single_predicate_output_gates = []
-        for i in range(len(cur_parameter_types)):
-          # depending on the position we fetch forall variables:
-          cur_variables = self.forall_variables_list[i]
-          cur_gates = []
-          # generating or gate for all the possible objects of specified type:
-          valid_objects_cur_type = obj_type_index[cur_parameter_types[i]]
-          for valid_index in valid_objects_cur_type:
-            gate_variables = self.tfunc.generate_binary_format(cur_variables, valid_index)
-            self.gates_generator.and_gate(gate_variables)
-            cur_gates.append(self.gates_generator.output_gate)
-          self.encoding.append(['# Overall or gate for all possiblities for ' + str(i) + 'th parameter:'])
-          self.gates_generator.or_gate(cur_gates)
-          single_predicate_output_gates.append(self.gates_generator.output_gate)
-        # We set rest of the parameters to 0 objects:
-        for i in range(len(cur_parameter_types), self.tfunc.probleminfo.max_predicate_parameters):
-          temp_forall_variables = self.forall_variables_list[i]
-          # We go with first object by default, nothing special:
-          self.encoding.append(['# restricted object clause: '])
-          gate_variables = self.tfunc.generate_binary_format(temp_forall_variables, 0)
-          self.gates_generator.and_gate(gate_variables)
-          single_predicate_output_gates.append(self.gates_generator.output_gate)
-        self.encoding.append(['# And gate for all parameter possibilities:'])
-        self.gates_generator.and_gate(single_predicate_output_gates)
-        all_conditional_output_gates.append(self.gates_generator.output_gate)
-
-
-    self.encoding.append(['# Final conditional gate: '])
-    self.gates_generator.or_gate(all_conditional_output_gates)
-    self.conditional_final_output_gate = self.gates_generator.output_gate
-    self.encoding.append(["# ------------------------------------------------------------------------"])
-
-  def generate_simple_restricted_forall_constraints(self):
-
-    self.encoding.append(["# ------------------------------------------------------------------------"])
-    self.encoding.append(['# Conditional forall constraints: '])
-
-    # All conditional output gates:
-    all_conditional_output_gates = []
-
-    if (not math.log2(self.tfunc.probleminfo.num_objects).is_integer()):
-      for cur_variables in self.forall_variables_list:
-        lsc.add_circuit(self.gates_generator, cur_variables, self.tfunc.probleminfo.num_objects)
-        all_conditional_output_gates.append(self.gates_generator.output_gate)
-
-    self.encoding.append(['# Final conditional gate: '])
-    self.gates_generator.and_gate(all_conditional_output_gates)
-    self.conditional_final_output_gate = self.gates_generator.output_gate
-    self.encoding.append(["# ------------------------------------------------------------------------"])
-
-
-  # Final output gate is an and-gate with inital, goal and transition gates:
+  # Final output gate is an and-gate with inital, goal, transition, and layer equality gates:
   def generate_final_gate(self):
     final_gates_list = []
     final_gates_list.append(self.initial_output_gate)
     final_gates_list.append(self.goal_output_gate)
-    final_gates_list.extend(self.transition_step_output_gates)
+    final_gates_list.append(self.transition_output_gate)
+    final_gates_list.append(self.layer_equality_output_gate)
     self.encoding.append(["# ------------------------------------------------------------------------"])
     self.encoding.append(['# Final output gate:'])
-    self.encoding.append(['# And gate for initial, output and transition functions:'])
+    self.encoding.append(['# And gate for initial, output, transition function gate and layer equality gate:'])
     self.gates_generator.and_gate(final_gates_list)
-    # Restricting forall seems expensive, making it optional:
-    if (self.tfunc.parsed_instance.args.restricted_forall >= 1):
-      self.encoding.append(['# Conditional gate for forall restriction:'])
-      self.gates_generator.if_then_gate(self.conditional_final_output_gate, self.gates_generator.output_gate)
     self.final_output_gate = self.gates_generator.output_gate
     self.encoding.append(["# ------------------------------------------------------------------------"])
 
@@ -430,25 +379,18 @@ class SimpleEncoding:
     self.encoding = []
     self.initial_output_gate = 0 # initial output gate can never be 0
     self.goal_output_gate = 0 # goal output gate can never be 0
-    self.transition_step_output_gates = []
+    self.transition_output_gate = 0 # can never be 0
+    self.layer_equality_output_gate = 0 # can never be 0
     self.conditional_final_output_gate = 0 # Can never be 0
     self.final_output_gate = 0 # Can never be 0
 
-
-    # Generating k sets of action and parameter variables:
-    self.action_variables = []
+    # Generating action and parameter variables:
+    self.action_variables = self.encoding_variables.get_vars(tfunc.probleminfo.num_action_variables)
+    # Generating logarithmic parameter variables for max parameter arity:
     self.parameter_variables = []
-    for i in range(tfunc.parsed_instance.args.plan_length):
-      # Generating logarithmic action variables (along with noop):
-      single_step_action_vars = self.encoding_variables.get_vars(tfunc.probleminfo.num_action_variables)
-      self.action_variables.append(single_step_action_vars)
-      # Generating logarithmic parameter variables for max parameter arity:
-      single_step_parameter_variable_list = []
-      for j in range(tfunc.probleminfo.max_action_parameters):
-        step_parameter_variables = self.encoding_variables.get_vars(tfunc.probleminfo.num_parameter_variables)
-        single_step_parameter_variable_list.append(step_parameter_variables)
-      self.parameter_variables.append(single_step_parameter_variable_list)
-
+    for j in range(tfunc.probleminfo.max_action_parameters):
+      step_parameter_variables = self.encoding_variables.get_vars(tfunc.probleminfo.num_parameter_variables)
+      self.parameter_variables.append(step_parameter_variables)
 
     # generating forall varibles with max predicate arity:
     self.forall_variables_list = []
@@ -461,29 +403,38 @@ class SimpleEncoding:
     # generating static variables only one set is enough, as no propagation:
     self.static_variables = self.encoding_variables.get_vars(tfunc.probleminfo.num_static_predicates)
 
-    # generating k+1 sets of non-static variables for propagation:
+    # generating non-static variables for Initial and goal states:
+    self.inital_non_static_variables = self.encoding_variables.get_vars(tfunc.probleminfo.num_non_static_predicates)
+    self.goal_non_static_variables = self.encoding_variables.get_vars(tfunc.probleminfo.num_non_static_predicates)
+
+    # for now we run plans of length 2 or more:
+    assert(tfunc.parsed_instance.args.plan_length >= 2)
+    # generating 3*log(depth) non-static variables for log propagation representation:
+    self.plan_depth = math.ceil(math.log2(tfunc.parsed_instance.args.plan_length))
     self.non_static_variables = []
-    for i in range(tfunc.parsed_instance.args.plan_length + 1):
+    for i in range(3*self.plan_depth):
       step_non_static_variables = self.encoding_variables.get_vars(tfunc.probleminfo.num_non_static_predicates)
       self.non_static_variables.append(step_non_static_variables)
 
+    # forall path variables, representing layers:
+    self.forall_path_variables = self.encoding_variables.get_vars(self.plan_depth)
+
+
     # Generating quantifer blocks:
     self.generate_quantifier_blocks()
-    # Generating k steps i.e., plan length number of transitions:
-    self.generate_k_transitions()
+
+    # A single transition function is enough between last two predicate sets:
+    self.generate_transition_function()
 
     #print(self.transition_step_output_gates)
 
     self.gates_generator = gg(self.encoding_variables, self.encoding)
 
+    # Generating equality clauses between different layers:
+    self.generate_equality_clauses_between_layers()
+
     self.generate_initial_gate()
 
     self.generate_goal_gate()
-
-    # Restricting forall seems expensive, making it optional:
-    if (self.tfunc.parsed_instance.args.restricted_forall == 1):
-      self.generate_simple_restricted_forall_constraints()
-    elif(self.tfunc.parsed_instance.args.restricted_forall == 2):
-      self.generate_restricted_forall_constraints()
 
     self.generate_final_gate()
