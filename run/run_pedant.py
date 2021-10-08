@@ -41,6 +41,24 @@ class RunPedant():
         self.sat = 1
         break
 
+  # parsing the caqe solver output:
+  def parse_caqe_output(self, i, all_action_vars):
+    f = open(self.output_file_path, 'r')
+    lines = f.readlines()
+
+    for line in lines:
+      if ('V' in line):
+        temp = line.split(" ")
+        if (temp != ['\n']):
+          literal = temp[1]
+          if (int(literal) not in all_action_vars and -int(literal) not in all_action_vars):
+            continue
+          if int(literal) > 0:
+            self.sol_map[i].append(int(literal))
+          else:
+            self.sol_map[i].append(int(literal))
+
+
   # If plan extraction is enabled, we extract the assignments:
   def parse_certificate_output(self, encoding):
     # we need each action variable and there dependencies i.e., the forall path variables:
@@ -48,6 +66,7 @@ class RunPedant():
     all_action_vars.extend(encoding.action_variables)
     for par_vars in encoding.parameter_variables:
       all_action_vars.extend(par_vars)
+
 
     # now parse through certificate and append models of all action variables:
     f = open(self.certificate_out, 'r')
@@ -61,10 +80,12 @@ class RunPedant():
     new_header += ( ' ' + str(int(header[-1]) + len(encoding.forall_path_variables)))
 
     # First initializing the solution map is each empty time step key:
+    # For each forall path assignment, we need to find the corresponding value:
     for i in range(encoding.tfunc.parsed_instance.args.plan_length):
       binary_format = encoding.tfunc.generate_binary_format(encoding.forall_path_variables, i)
       self.sol_map[i] = []
-      f = open("temp_" + str(i), 'w')
+      # we use the certificate output directly:
+      f = open(self.certificate_out, 'w')
       f.write(new_header + '\n')
       for line in lines:
         f.write(line)
@@ -72,7 +93,9 @@ class RunPedant():
         f.write(str(var) + ' 0\n')
       f.close()
 
-    # For each forall path assignment, we need to find the corresponding value:
+      command = self.extraction_solver_path + " --qdo " + self.certificate_out + " > " + self.output_file_path
+      os.system(command)
+      self.parse_caqe_output(i, all_action_vars)
     # Finally expand the solution map for the final action plan extraction:
 
   def __init__(self, encoding):
@@ -84,11 +107,10 @@ class RunPedant():
     # By default timeout not occured yet:
     self.timed_out = False
     self.solver_path = os.path.join(args.planner_path, 'solvers', 'pedant-solver', 'pedant')
+    self.extraction_solver_path = os.path.join(args.planner_path, 'solvers', 'caqe', 'caqe')
     self.sol_map = {}
     self.sat = -1 # by default plan not found.
 
     self.run_pedant()
     self.parse_pedant_output()
     self.parse_certificate_output(encoding)
-
-    print(self.sol_map)
