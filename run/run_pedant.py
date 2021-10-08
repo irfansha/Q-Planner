@@ -54,46 +54,23 @@ class RunPedant():
     lines = f.readlines()
     f.close()
 
+    header = lines.pop(0).strip("\n").split(" ")
+    # we are adding more clauses equal to number of for all path variables:
+    new_header = ''
+    new_header = ' '.join(header[:-1])
+    new_header += ( ' ' + str(int(header[-1]) + len(encoding.forall_path_variables)))
+
     # First initializing the solution map is each empty time step key:
     for i in range(encoding.tfunc.parsed_instance.args.plan_length):
+      binary_format = encoding.tfunc.generate_binary_format(encoding.forall_path_variables, i)
       self.sol_map[i] = []
-
-    cur_var = 0
-    step_model_clauses = []
-    for line in lines:
-      if ('c Model for variable' in line):
-        # remembering the previous variable:
-        prev_var = cur_var
-        if (prev_var in all_action_vars):
-          # We check for each time step within plan length:
-          for i in range(encoding.tfunc.parsed_instance.args.plan_length):
-            binary_format = encoding.tfunc.generate_binary_format(encoding.forall_path_variables, i)
-            # for now just initializing solver again:
-            c = Cadical()
-            for clause in step_model_clauses:
-              c.add_clause(clause)
-            # Adding the forall path assginment:
-            for each_forall_var  in binary_format:
-              c.add_clause([each_forall_var])
-            c.solve()
-            model = c.get_model()
-            if (prev_var in model):
-              self.sol_map[i].append(prev_var)
-            elif(-prev_var in model):
-              self.sol_map[i].append(-prev_var)
-
-        # Now a new variable model:
-        cur_var = int(line.lstrip("c Model for variable ").rstrip(".\n"))
-        step_model_clauses = []
-      else:
-        if (cur_var in all_action_vars):
-          parsed_list = line.rstrip(" 0\n").split(" ")
-          # We need integers list for the clauses:
-          parsed_int_list = []
-          for var in parsed_list:
-            parsed_int_list.append(int(var))
-          step_model_clauses.append(parsed_int_list)
-
+      f = open("temp_" + str(i), 'w')
+      f.write(new_header + '\n')
+      for line in lines:
+        f.write(line)
+      for var in binary_format:
+        f.write(str(var) + ' 0\n')
+      f.close()
 
     # For each forall path assignment, we need to find the corresponding value:
     # Finally expand the solution map for the final action plan extraction:
@@ -113,3 +90,5 @@ class RunPedant():
     self.run_pedant()
     self.parse_pedant_output()
     self.parse_certificate_output(encoding)
+
+    print(self.sol_map)
