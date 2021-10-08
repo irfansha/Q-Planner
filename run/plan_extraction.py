@@ -31,6 +31,43 @@ class ExtractPlan():
         object_list.append(str(object_name))
       self.plan.append([action_name, tuple(object_list)])
 
+  def extract_dqdiamcs_plan(self, encoding):
+    for i in range(encoding.tfunc.parsed_instance.args.plan_length):
+      # Extracting action name:
+      action_name_string = ''
+      for variable in encoding.action_variables:
+        # If positive variable:
+        if (variable in self.sol_map[i]):
+          action_name_string += '1'
+        elif (-variable in self.sol_map[i]):
+          action_name_string += '0'
+      # Action index, powers of two:
+      action_index = int(action_name_string, 2)
+
+      # If action index if equal to number of actions, then it is noop:
+      if action_index == encoding.tfunc.probleminfo.num_valid_actions:
+        action_name = 'noop'
+      else:
+        action_name = encoding.tfunc.probleminfo.valid_actions[action_index]
+      object_list = []
+      # Generating parameter variables based on arity of current action:
+      if (action_name == 'noop'):
+        continue
+      cur_action = encoding.tfunc.parsed_instance.parsed_problem.get_action(action_name)
+      for j in range(len(cur_action.parameters)):
+        object_name_string = ''
+        for single_parameter_variable in encoding.parameter_variables[j]:
+          # If positive variable:
+          if (single_parameter_variable in self.sol_map[i]):
+            object_name_string += '1'
+          elif (-single_parameter_variable in self.sol_map[i]):
+            object_name_string += '0'
+
+        # Parameter object index, powers of two:
+        object_index = int(object_name_string, 2)
+        object_name = encoding.tfunc.probleminfo.objects[object_index]
+        object_list.append(str(object_name))
+      self.plan.append([action_name, tuple(object_list)])
 
   def print_plan(self):
     for action in self.plan:
@@ -60,7 +97,11 @@ class ExtractPlan():
     self.file_path = encoding.tfunc.parsed_instance.args.plan_out
     self.plan = []
     self.updated_format_plan = []
-    self.extract_plan(encoding)
+    # If format is dqdimacs, then the solution map has time step as key and the action variables as values:
+    if (encoding.tfunc.parsed_instance.args.encoding_format == 4):
+      self.extract_dqdiamcs_plan(encoding)
+    else:
+      self.extract_plan(encoding)
     self.update_format()
     self.print_updated_plan()
     self.print_to_file()

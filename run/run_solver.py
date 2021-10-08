@@ -3,6 +3,7 @@
 from run.run_quabs import RunQuabs as rq
 from run.run_caqe import RunCaqe as rc
 from run.run_rareqs import RunRareqs as rr
+from run.run_pedant import RunPedant as rp
 from run.plan_extraction import ExtractPlan as ep
 import testing.val_testing as vt
 
@@ -18,6 +19,11 @@ def run_single_solver(encoding):
   elif (args.solver == 3):
     instance = rr(args)
     sol_map = instance.sol_map
+  elif (args.solver == 4):
+    # Giving encoding directly for certifacte parsing:
+    instance = rp(encoding)
+    sol_map = instance.sol_map
+
 
   # Checking existence of plan:
   if instance.sat == 1:
