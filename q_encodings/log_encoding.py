@@ -75,6 +75,88 @@ class LogEncoding:
       dep_var_list.extend(self.forall_path_variables)
       self.quantifier_block.append(['depend(' + ', '.join(str(x) for x in dep_var_list) + ')'])
 
+  # Generates temporary qcir like blocks for qdimacs transformation:
+  def generate_temporary_quantifier_blocks(self):
+    # forall object combination variables:
+    all_forall_variables = []
+    self.quantifier_block.append(['# Forall object variables :'])
+    self.quantifier_block.append(['# ' + str(self.forall_variables_list)])
+    for i in range(len(self.forall_variables_list)):
+      all_forall_variables.extend(self.forall_variables_list[i])
+    self.quantifier_block.append(['forall(' + ', '.join(str(x) for x in all_forall_variables) + ')'])
+
+    # Inital, goal non-static predicate variables and static variables which only depend on object combination variables:
+    all_outside_predicate_variables = []
+
+    self.quantifier_block.append(['# initial non-static predicate variables :'])
+    self.quantifier_block.append(['# ' + str(self.inital_non_static_variables)])
+    all_outside_predicate_variables.extend(self.inital_non_static_variables)
+
+    self.quantifier_block.append(['# goal non-static predicate variables :'])
+    self.quantifier_block.append(['# ' + str(self.goal_non_static_variables)])
+    all_outside_predicate_variables.extend(self.goal_non_static_variables)
+
+    self.quantifier_block.append(['# static predicate variables :'])
+    self.quantifier_block.append(['# ' + str(self.static_variables)])
+    all_outside_predicate_variables.extend(self.static_variables)
+    self.quantifier_block.append(['exists(' + ', '.join(str(x) for x in all_outside_predicate_variables) + ')'])
+
+    # All layers of non-static predicates:
+
+    self.quantifier_block.append(['# non-static predicate variables and forall path variables:'])
+    for i in range(self.plan_depth):
+      self.quantifier_block.append(['# Layer ' + str(i) + ':'])
+      self.quantifier_block.append(['exists(' + ', '.join(str(x) for x in self.non_static_variables[3*i]) + ')'])
+      self.quantifier_block.append(['forall(' + str(self.forall_path_variables[i]) + ')'])
+      self.quantifier_block.append(['exists(' + ', '.join(str(x) for x in self.non_static_variables[3*i + 1]) + ')'])
+      self.quantifier_block.append(['exists(' + ', '.join(str(x) for x in self.non_static_variables[3*i + 2]) + ')'])
+
+    # action variables with only forall path variable dependencies:
+    all_action_variables = []
+    self.quantifier_block.append(['# Action and parameter variables :'])
+    self.quantifier_block.append(['# ' + str(self.action_variables)])
+    self.quantifier_block.append(['# ' + str(self.parameter_variables)])
+    all_action_variables.extend(self.action_variables)
+    for j in range(len(self.parameter_variables)):
+      all_action_variables.extend(self.parameter_variables[j])
+    self.quantifier_block.append(['exists(' + ', '.join(str(x) for x in all_action_variables) + ')'])
+
+
+  # Generates quanifier blocks for DQBF instead of QBF:
+  def generate_only_dqdimacs_prefix(self):
+    # forall object combination variables:
+    all_forall_variables = []
+    for i in range(len(self.forall_variables_list)):
+      all_forall_variables.extend(self.forall_variables_list[i])
+    self.dqdimacs_prefix.append('a ' + ' '.join(str(x) for x in all_forall_variables) + ' 0')
+
+    # Inital, goal non-static predicate variables and static variables which only depend on object combination variables:
+    all_outside_predicate_variables = []
+
+    all_outside_predicate_variables.extend(self.inital_non_static_variables)
+    all_outside_predicate_variables.extend(self.goal_non_static_variables)
+    all_outside_predicate_variables.extend(self.static_variables)
+    self.dqdimacs_prefix.append('e ' + ' '.join(str(x) for x in all_outside_predicate_variables) + ' 0')
+
+    # All layers of non-static predicates:
+    for i in range(self.plan_depth):
+      self.dqdimacs_prefix.append('e ' + ' '.join(str(x) for x in self.non_static_variables[3*i]) + ' 0')
+      self.dqdimacs_prefix.append('a ' + str(self.forall_path_variables[i]) + ' 0')
+      self.dqdimacs_prefix.append('e ' + ' '.join(str(x) for x in self.non_static_variables[3*i + 1]) + ' 0')
+      self.dqdimacs_prefix.append('e ' + ' '.join(str(x) for x in self.non_static_variables[3*i + 2]) + ' 0')
+
+    # action variables with only forall path variable dependencies:
+    all_action_variables = []
+    all_action_variables.extend(self.action_variables)
+    for j in range(len(self.parameter_variables)):
+      all_action_variables.extend(self.parameter_variables[j])
+
+    # Specifying dependencies on forall path variables for action variables:
+    for var in all_action_variables:
+      dep_var_list = [var]
+      dep_var_list.extend(self.forall_path_variables)
+      self.dqdimacs_prefix.append('d ' + ' '.join(str(x) for x in dep_var_list) + ' 0')
+
 
   # only one transition for DQBF:
   def generate_transition_function(self):
@@ -376,6 +458,7 @@ class LogEncoding:
     self.tfunc = tfunc
     self.encoding_variables = vd()
     self.quantifier_block = []
+    self.dqdimacs_prefix = []
     self.encoding = []
     self.initial_output_gate = 0 # initial output gate can never be 0
     self.goal_output_gate = 0 # goal output gate can never be 0
@@ -421,7 +504,14 @@ class LogEncoding:
 
 
     # Generating quantifer blocks:
-    self.generate_quantifier_blocks()
+    if (tfunc.parsed_instance.args.encoding_format == 4):
+      # For qdimacs, we need to first convert the qcir to qdimacs and add dependencies:
+      self.generate_temporary_quantifier_blocks()
+      self.generate_only_dqdimacs_prefix()
+    else:
+      self.generate_quantifier_blocks()
+
+
 
     # A single transition function is enough between last two predicate sets:
     self.generate_transition_function()
