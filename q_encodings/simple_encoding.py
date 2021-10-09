@@ -110,7 +110,6 @@ class SimpleEncoding:
     self.gates_generator.or_gate(list_obj_instances)
     return self.gates_generator.output_gate
 
-  # TODO: Testing is needed
   def generate_initial_gate(self):
     initial_step_output_gates = []
 
@@ -283,7 +282,7 @@ class SimpleEncoding:
     self.gates_generator.and_gate(goal_step_output_gates)
     self.goal_output_gate = self.gates_generator.output_gate
 
-  # TODO: We might be over-engineering, might work well for strongly constrained
+  # We might be over-engineering, might work well for strongly constrained
   # transition function:
   def generate_restricted_forall_constraints(self):
 
