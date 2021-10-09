@@ -6,6 +6,10 @@ from tarski.syntax import formulas as fr
 import math
 import utils.lessthen_cir as lsc
 
+'''
+TODO:
+  - Specific dependencies for predicates might help
+'''
 
 class LogEncoding:
 
@@ -440,6 +444,158 @@ class LogEncoding:
     self.gates_generator.and_gate(goal_step_output_gates)
     self.goal_output_gate = self.gates_generator.output_gate
 
+  # Restricting transitions to the length of plan:
+  def generate_path_restriction_gates(self):
+    # path variables less than plan length clause:
+    self.encoding.append(["# ------------------------------------------------------------------------"])
+    self.encoding.append(['# less than circuit for path variables with plan length:'])
+    lsc.add_circuit(self.gates_generator, self.forall_path_variables, self.tfunc.parsed_instance.args.plan_length)
+    less_than_output_gate = self.gates_generator.output_gate
+
+    # If out of plan length, then the action must be noop:
+    self.encoding.append(['# action must be noop if outside the plan length:'])
+    noop_action_clause = self.tfunc.generate_binary_format(self.action_variables, self.tfunc.probleminfo.num_valid_actions)
+    self.gates_generator.and_gate(noop_action_clause)
+    noop_action_output_gate = self.gates_generator.output_gate
+
+    # The non-static predicates in the last layer are equal, may be providing explicit information helps:
+    self.encoding.append(['# equality gates between inner most non-static predicates:'])
+    self.gates_generator.complete_equality_gate(self.non_static_variables[-2], self.non_static_variables[-1])
+
+    # Conjunction of noop output gate and the complete equality gate:
+    self.encoding.append(['# conjunction between noop clause gate and equality output gate:'])
+    self.gates_generator.and_gate([noop_action_output_gate, self.gates_generator.output_gate])
+    conjunction_output_gate = self.gates_generator.output_gate
+
+    # Either path is within bounds or the cojunction holds:
+    self.encoding.append(['# or-gate between less than gate and conjunction gate:'])
+    self.gates_generator.or_gate([less_than_output_gate, conjunction_output_gate])
+    self.path_restriction_output_gate = self.gates_generator.output_gate
+
+  # We might be over-engineering, might work well for strongly constrained
+  # transition function:
+  def generate_restricted_forall_constraints(self):
+
+    self.encoding.append(["# ------------------------------------------------------------------------"])
+    self.encoding.append(['# Conditional forall constraints: '])
+
+    # All conditional output gates:
+    all_conditional_output_gates = []
+
+    # Generating an object type index, where object type is the key
+    # and all the object indexs of that types is the value list:
+    obj_type_index = dict()
+
+    # For each type we look at the set of objects with same type and add
+    # it into out dictionary as indexes:
+    for tp in self.tfunc.parsed_instance.lang.sorts:
+      obj_list = list(self.tfunc.parsed_instance.lang.get(tp.name).domain())
+      obj_index_list = []
+      for obj in obj_list:
+        obj_index = self.tfunc.probleminfo.object_names.index(obj.name)
+        obj_index_list.append(obj_index)
+      obj_index_list.sort()
+      obj_type_index[tp] = obj_index_list
+
+    # we do not want to iterate through again:
+    local_valid_type_names_list = []
+    # Since variables for types always have one parameter,
+    # we choose first set of forall variables:
+    cur_variables = self.forall_variables_list[0]
+    # Constraint for types:
+    for valid_type in self.tfunc.parsed_instance.valid_types:
+      single_type_output_gates = []
+      # We consider only static predicate types:
+      local_valid_type_names_list.append(valid_type.name)
+      # gathering all the types for or gate:
+      cur_gates = []
+      # if there are no objects, we ignore:
+      if(len(obj_type_index[valid_type]) == 0):
+        continue
+      # Generating conditional clauses:
+      self.encoding.append(['# Conditional for type ' + str(valid_type.name) + ': '])
+      for valid_index in obj_type_index[valid_type]:
+        gate_variables = self.tfunc.generate_binary_format(cur_variables, valid_index)
+        self.gates_generator.and_gate(gate_variables)
+        cur_gates.append(self.gates_generator.output_gate)
+      self.encoding.append(['# Overall or gate for all possiblities: '])
+      self.gates_generator.or_gate(cur_gates)
+      single_type_output_gates.append(self.gates_generator.output_gate)
+      # We need to restrict the other position forall variables for speed up:
+      for i in range(1, self.tfunc.probleminfo.max_predicate_parameters):
+        temp_forall_variables = self.forall_variables_list[i]
+        # We go with first object by default, nothing special:
+        self.encoding.append(['# restricted object clause: '])
+        gate_variables = self.tfunc.generate_binary_format(temp_forall_variables, 0)
+        self.gates_generator.and_gate(gate_variables)
+        single_type_output_gates.append(self.gates_generator.output_gate)
+      self.encoding.append(['# And gate for all parameters of single type: '])
+      self.gates_generator.and_gate(single_type_output_gates)
+      all_conditional_output_gates.append(self.gates_generator.output_gate)
+    #print(all_conditional_output_gates)
+
+    # Perhaps easier to just go through all the predicates at once:
+    all_valid_predicates = []
+    all_valid_predicates.extend(self.tfunc.probleminfo.static_predicates)
+    all_valid_predicates.extend(self.tfunc.probleminfo.non_static_predicates)
+
+    # Adding constraints for the forall variables based on predicates:
+    for predicate in all_valid_predicates:
+      if (predicate not in local_valid_type_names_list):
+        self.encoding.append(['# Conditional for predicate ' + str(predicate) + ': '])
+        cur_parameter_types = self.tfunc.parsed_instance.lang.get(predicate).sort
+        single_predicate_output_gates = []
+        for i in range(len(cur_parameter_types)):
+          # depending on the position we fetch forall variables:
+          cur_variables = self.forall_variables_list[i]
+          cur_gates = []
+          # generating or gate for all the possible objects of specified type:
+          valid_objects_cur_type = obj_type_index[cur_parameter_types[i]]
+          for valid_index in valid_objects_cur_type:
+            gate_variables = self.tfunc.generate_binary_format(cur_variables, valid_index)
+            self.gates_generator.and_gate(gate_variables)
+            cur_gates.append(self.gates_generator.output_gate)
+          self.encoding.append(['# Overall or gate for all possiblities for ' + str(i) + 'th parameter:'])
+          self.gates_generator.or_gate(cur_gates)
+          single_predicate_output_gates.append(self.gates_generator.output_gate)
+        # We set rest of the parameters to 0 objects:
+        for i in range(len(cur_parameter_types), self.tfunc.probleminfo.max_predicate_parameters):
+          temp_forall_variables = self.forall_variables_list[i]
+          # We go with first object by default, nothing special:
+          self.encoding.append(['# restricted object clause: '])
+          gate_variables = self.tfunc.generate_binary_format(temp_forall_variables, 0)
+          self.gates_generator.and_gate(gate_variables)
+          single_predicate_output_gates.append(self.gates_generator.output_gate)
+        self.encoding.append(['# And gate for all parameter possibilities:'])
+        self.gates_generator.and_gate(single_predicate_output_gates)
+        all_conditional_output_gates.append(self.gates_generator.output_gate)
+
+
+    self.encoding.append(['# Final conditional gate: '])
+    self.gates_generator.or_gate(all_conditional_output_gates)
+    self.conditional_final_output_gate = self.gates_generator.output_gate
+    self.encoding.append(["# ------------------------------------------------------------------------"])
+
+  def generate_simple_restricted_forall_constraints(self):
+
+    self.encoding.append(["# ------------------------------------------------------------------------"])
+    self.encoding.append(['# Conditional forall constraints: '])
+
+    # All conditional output gates:
+    all_conditional_output_gates = []
+
+    if (not math.log2(self.tfunc.probleminfo.num_objects).is_integer()):
+      for cur_variables in self.forall_variables_list:
+        lsc.add_circuit(self.gates_generator, cur_variables, self.tfunc.probleminfo.num_objects)
+        all_conditional_output_gates.append(self.gates_generator.output_gate)
+
+    self.encoding.append(['# Final conditional gate: '])
+    self.gates_generator.and_gate(all_conditional_output_gates)
+    self.conditional_final_output_gate = self.gates_generator.output_gate
+    self.encoding.append(["# ------------------------------------------------------------------------"])
+
+
+
   # Final output gate is an and-gate with inital, goal, transition, and layer equality gates:
   def generate_final_gate(self):
     final_gates_list = []
@@ -449,8 +605,16 @@ class LogEncoding:
     final_gates_list.append(self.layer_equality_output_gate)
     self.encoding.append(["# ------------------------------------------------------------------------"])
     self.encoding.append(['# Final output gate:'])
-    self.encoding.append(['# And gate for initial, output, transition function gate and layer equality gate:'])
+    if (self.path_restriction_output_gate != 0):
+      final_gates_list.append(self.path_restriction_output_gate)
+      self.encoding.append(['# And gate for initial, output, transition function gate, layer equality gate, and path restriction gate:'])
+    else:
+      self.encoding.append(['# And gate for initial, output, transition function gate and layer equality gate:'])
     self.gates_generator.and_gate(final_gates_list)
+    # Restricting forall seems expensive, making it optional:
+    if (self.tfunc.parsed_instance.args.restricted_forall >= 1):
+      self.encoding.append(['# Conditional gate for forall restriction:'])
+      self.gates_generator.if_then_gate(self.conditional_final_output_gate, self.gates_generator.output_gate)
     self.final_output_gate = self.gates_generator.output_gate
     self.encoding.append(["# ------------------------------------------------------------------------"])
 
@@ -464,6 +628,7 @@ class LogEncoding:
     self.goal_output_gate = 0 # goal output gate can never be 0
     self.transition_output_gate = 0 # can never be 0
     self.layer_equality_output_gate = 0 # can never be 0
+    self.path_restriction_output_gate = 0 # can never be 0
     self.conditional_final_output_gate = 0 # Can never be 0
     self.final_output_gate = 0 # Can never be 0
 
@@ -490,10 +655,13 @@ class LogEncoding:
     self.inital_non_static_variables = self.encoding_variables.get_vars(tfunc.probleminfo.num_non_static_predicates)
     self.goal_non_static_variables = self.encoding_variables.get_vars(tfunc.probleminfo.num_non_static_predicates)
 
-    # for now we run plans of length 2 or more:
-    assert(tfunc.parsed_instance.args.plan_length >= 2)
+    # If plan length is 1, we still generate encoding allowing plan length 2,
+    # if plan length is 1, then there is no need to use log_encoding explicitly:
+    if (tfunc.parsed_instance.args.plan_length == 1):
+      self.plan_depth = 1
+    else:
+      self.plan_depth = math.ceil(math.log2(tfunc.parsed_instance.args.plan_length))
     # generating 3*log(depth) non-static variables for log propagation representation:
-    self.plan_depth = math.ceil(math.log2(tfunc.parsed_instance.args.plan_length))
     self.non_static_variables = []
     for i in range(3*self.plan_depth):
       step_non_static_variables = self.encoding_variables.get_vars(tfunc.probleminfo.num_non_static_predicates)
@@ -526,5 +694,15 @@ class LogEncoding:
     self.generate_initial_gate()
 
     self.generate_goal_gate()
+
+    # Only call if plan length is non-powers of 2:
+    if (math.pow(2,self.plan_depth) != self.tfunc.parsed_instance.args.plan_length):
+      self.generate_path_restriction_gates()
+
+    # Restricting forall seems expensive, making it optional:
+    if (self.tfunc.parsed_instance.args.restricted_forall == 1):
+      self.generate_simple_restricted_forall_constraints()
+    elif(self.tfunc.parsed_instance.args.restricted_forall == 2):
+      self.generate_restricted_forall_constraints()
 
     self.generate_final_gate()
