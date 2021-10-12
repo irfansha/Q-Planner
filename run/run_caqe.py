@@ -52,7 +52,10 @@ class RunCaqe():
             self.sol_map[-int(literal)] = 0
 
   def __init__(self, args):
-    self.input_file_path = args.encoding_out
+    if (args.preprocessing == 1 or args.preprocessing == 3):
+      self.input_file_path = args.preprocessed_encoding_out
+    else:
+      self.input_file_path = args.encoding_out
     self.output_file_path = args.solver_out
     self.time_limit = args.time_limit
     self.preprocessing = args.preprocessing

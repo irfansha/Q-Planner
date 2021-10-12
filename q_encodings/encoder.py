@@ -75,14 +75,22 @@ def generate_encoding(tfunc):
   else:
     print("Encoding not available yet!")
 
-  # External preprocessing:
+  # External preprocessing with bloqqer:
   if (tfunc.parsed_instance.args.preprocessing == 1):
     preprocessor_path = os.path.join(tfunc.parsed_instance.args.planner_path, 'tools', 'Bloqqer', 'bloqqer')
     # Calling the tool:
     # We preprocess only qdimacs format encoding:
     assert(tfunc.parsed_instance.args.encoding_format == 2)
     os.system(preprocessor_path + ' ' + tfunc.parsed_instance.args.encoding_out + ' > ' + tfunc.parsed_instance.args.preprocessed_encoding_out)
+    print("Preprocessing complete")
 
+  if (tfunc.parsed_instance.args.preprocessing == 3):
+    preprocessor_path = os.path.join(tfunc.parsed_instance.args.planner_path, 'tools', 'HQSpre', 'hqspre')
+    # Calling the tool:
+    # We preprocess only qdimacs format encoding:
+    assert(tfunc.parsed_instance.args.encoding_format == 2 or tfunc.parsed_instance.args.encoding_format == 4)
+    os.system(preprocessor_path + ' --timeout ' +  str(tfunc.parsed_instance.args.preprocessing_time_limit) + ' -o ' + tfunc.parsed_instance.args.preprocessed_encoding_out + ' ' + tfunc.parsed_instance.args.encoding_out)
+    print("Preprocessing complete")
 
   # Returning encoding for plan extraction:
   return encoding
