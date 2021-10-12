@@ -2,7 +2,6 @@
 
 import subprocess
 import os
-from pysat.solvers import Cadical
 
 class RunPedant():
 
