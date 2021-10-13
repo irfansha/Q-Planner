@@ -8,6 +8,8 @@ class RunCaqe():
   def run_caqe(self):
     if (self.preprocessing == 2):
       command = self.solver_path + " --preprocessor=bloqqer --qdo " + self.input_file_path + " > " + self.output_file_path
+    elif (self.preprocessing == 3):
+      command = self.solver_path + " --preprocessor=hqspre --qdo " + self.input_file_path + " > " + self.output_file_path
     else:
       command = self.solver_path + " --qdo " + self.input_file_path + " > " + self.output_file_path
     try:
@@ -52,10 +54,7 @@ class RunCaqe():
             self.sol_map[-int(literal)] = 0
 
   def __init__(self, args):
-    if (args.preprocessing == 1 or args.preprocessing == 3):
-      self.input_file_path = args.preprocessed_encoding_out
-    else:
-      self.input_file_path = args.encoding_out
+    self.input_file_path = args.encoding_out
     self.output_file_path = args.solver_out
     self.time_limit = args.time_limit
     self.preprocessing = args.preprocessing

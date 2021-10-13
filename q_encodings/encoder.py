@@ -84,7 +84,8 @@ def generate_encoding(tfunc):
     os.system(preprocessor_path + ' ' + tfunc.parsed_instance.args.encoding_out + ' > ' + tfunc.parsed_instance.args.preprocessed_encoding_out)
     print("Preprocessing complete")
 
-  if (tfunc.parsed_instance.args.preprocessing == 3):
+  # We call hqsre internally for caqe:
+  if (tfunc.parsed_instance.args.preprocessing == 3 and tfunc.parsed_instance.args.solver != 2):
     preprocessor_path = os.path.join(tfunc.parsed_instance.args.planner_path, 'tools', 'HQSpre', 'hqspre')
     # Calling the tool:
     # We preprocess only qdimacs format encoding:
