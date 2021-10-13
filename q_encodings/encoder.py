@@ -93,5 +93,17 @@ def generate_encoding(tfunc):
     os.system(preprocessor_path + ' --timeout ' +  str(tfunc.parsed_instance.args.preprocessing_time_limit) + ' -o ' + tfunc.parsed_instance.args.preprocessed_encoding_out + ' ' + tfunc.parsed_instance.args.encoding_out)
     print("Preprocessing complete")
 
+  if (tfunc.parsed_instance.args.preprocessing == 4):
+    preprocessor_path = os.path.join(tfunc.parsed_instance.args.planner_path, 'tools', 'QRATPre+', 'qratpre+')
+    # Calling the tool:
+    # We preprocess only qdimacs format encoding:
+    assert(tfunc.parsed_instance.args.encoding_format == 2 or tfunc.parsed_instance.args.encoding_format == 4)
+    if (tfunc.parsed_instance.args.run == 1):
+      os.system(preprocessor_path + ' --print-formula ' + tfunc.parsed_instance.args.encoding_out + ' ' +  str(tfunc.parsed_instance.args.preprocessing_time_limit)  + ' > ' + tfunc.parsed_instance.args.preprocessed_encoding_out)
+    else:
+      os.system(preprocessor_path + ' --print-formula --ignore-outermost-vars ' + tfunc.parsed_instance.args.encoding_out + ' ' +  str(tfunc.parsed_instance.args.preprocessing_time_limit)  + ' > ' + tfunc.parsed_instance.args.preprocessed_encoding_out)
+    print("Preprocessing complete")
+
+
   # Returning encoding for plan extraction:
   return encoding

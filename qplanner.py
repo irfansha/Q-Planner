@@ -72,7 +72,8 @@ if __name__ == '__main__':
                                        0 = off
                                        1 = bloqqer (version 37)
                                        2 = bloqqer-qdo (version 37)
-                                       3 = hqspre'''),default = 0)
+                                       3 = hqspre
+                                       4 = qratpre+'''),default = 0)
   parser.add_argument("--preprocessed_encoding_out", help="output preprocessed encoding file",default = 'intermediate_files/preprocessed_encoding')
   parser.add_argument("--time_limit", type=float, help="Solving time limit in seconds, default 1800 seconds",default = 1800)
   parser.add_argument("--preprocessing_time_limit", type=int, help="Preprocessing time limit in seconds, default 900 seconds",default = 900)

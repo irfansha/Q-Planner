@@ -54,7 +54,11 @@ class RunCaqe():
             self.sol_map[-int(literal)] = 0
 
   def __init__(self, args):
-    self.input_file_path = args.encoding_out
+    # If qratpre+ preprocessor is used:
+    if (args.preprocessing == 4):
+      self.input_file_path = args.preprocessed_encoding_out
+    else:
+      self.input_file_path = args.encoding_out
     self.output_file_path = args.solver_out
     self.time_limit = args.time_limit
     self.preprocessing = args.preprocessing
