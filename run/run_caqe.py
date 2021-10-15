@@ -28,7 +28,8 @@ class RunCaqe():
     lines = f.readlines()
     # Printing the data to the output for correctness purposes:
     for line in lines:
-      if (line != '\n' and 'V' not in line):
+      #if (line != '\n' and 'V' not in line):
+      if (line != '\n'):
         nline = line.strip("\n")
         print(nline)
 
