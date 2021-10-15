@@ -104,8 +104,8 @@ if __name__ == '__main__':
     exit()
 
   if (args.preprocessing == 3 and args.run == 2):
-    print("ERROR: cannot extract plan with HQSpre, only plan existence")
-    exit()
+    print("Warning: cannot extract plan with HQSpre, only plan existence")
+    #exit()
 
   # Run tests include all testcase domains:
   if (args.run_tests == 1):
