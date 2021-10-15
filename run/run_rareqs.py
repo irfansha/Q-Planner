@@ -22,13 +22,13 @@ class RunRareqs():
     f = open(self.output_file_path, 'r')
     lines = f.readlines()
     # Not needed as of now:
-    '''
+    #'''
     # Printing the data to the output for correctness purposes:
     for line in lines:
       if (line != '\n' and 'c' not in line):
         nline = line.strip("\n")
         print(nline)
-    '''
+    #'''
 
     # Making sure the state of solution is explicitly specified:
     for line in lines:
