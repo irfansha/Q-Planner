@@ -95,13 +95,13 @@ if __name__ == '__main__':
   # Cannot extract a plan with simple bloqqer
   # (must use bloqqer-qdo instead):
   if (args.preprocessing == 1 and args.run == 2 and args.solver == 2):
-    print("ERROR: cannot extract plan with bloqqer, use bloqqer-qdo instead")
+    print("ERROR: extract plan with bloqqer-qdo instead of bloqqer for CAQE")
     exit()
 
   # Cannot extract a plan with simple bloqqer (only plan existence available):
   if (args.preprocessing == 1 and args.run == 2):
-    print("ERROR: cannot extract plan with bloqqer, only plan existence")
-    exit()
+    print("Warning: cannot extract plan with bloqqer, only plan existence")
+    #exit()
 
   if (args.preprocessing == 3 and args.run == 2):
     print("Warning: cannot extract plan with HQSpre, only plan existence")

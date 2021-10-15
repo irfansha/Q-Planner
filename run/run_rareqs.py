@@ -55,7 +55,7 @@ class RunRareqs():
   def __init__(self, args):
     if (args.preprocessing == 0):
       self.input_file_path = args.encoding_out
-    elif (args.preprocessing == 1):
+    else:
       self.input_file_path = args.preprocessed_encoding_out
     self.output_file_path = args.solver_out
     self.time_limit = args.time_limit
