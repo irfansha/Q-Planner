@@ -98,7 +98,7 @@ class ExtractPlan():
     self.plan = []
     self.updated_format_plan = []
     # If format is dqdimacs, then the solution map has time step as key and the action variables as values:
-    if (encoding.tfunc.parsed_instance.args.encoding_format == 4):
+    if (encoding.tfunc.parsed_instance.args.encoding_format == 'dqdimacs'):
       self.extract_dqdiamcs_plan(encoding)
     else:
       self.extract_plan(encoding)

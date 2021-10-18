@@ -48,12 +48,9 @@ if __name__ == '__main__':
                                3 = both inner and outer invariants, default 0'''), default = 0)
   parser.add_argument("--invariants_out", help="output invariants file",default = 'intermediate_files/invariants')
   parser.add_argument("--val_testing", type=int, help="[0/1], default 1", default = 1)
-  parser.add_argument("--encoding_format", type=int, help=textwrap.dedent('''
+  parser.add_argument("--encoding_format", help=textwrap.dedent('''
                                        Encoding format:
-                                       1 = QCIR14
-                                       2 = QDIMACS (default)
-                                       3 = DQCIR
-                                       4 = DQDIMACS'''),default = 2)
+                                       [qcir/ qdimacs (default)/ dqcir/ dqdimacs'''),default = 'qdimacs')
   parser.add_argument("--encoding_out", help="output encoding file",default = 'intermediate_files/encoding')
   parser.add_argument("--intermediate_encoding_out", help="output intermediate encoding file",default = 'intermediate_files/intermediate_encoding')
   parser.add_argument("--solver", type=int, help=textwrap.dedent('''

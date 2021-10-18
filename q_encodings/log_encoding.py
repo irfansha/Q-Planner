@@ -8,7 +8,7 @@ import utils.lessthen_cir as lsc
 
 '''
 TODO:
-  - Specific dependencies for predicates might help
+  - Specific dependencies for predicates might help, especially type predicates need not depend on all forall variables.
 '''
 
 class LogEncoding:
@@ -672,7 +672,7 @@ class LogEncoding:
 
 
     # Generating quantifer blocks:
-    if (tfunc.parsed_instance.args.encoding_format == 4):
+    if (tfunc.parsed_instance.args.encoding_format == 'dqdimacs'):
       # For qdimacs, we need to first convert the qcir to qdimacs and add dependencies:
       self.generate_temporary_quantifier_blocks()
       self.generate_only_dqdimacs_prefix()

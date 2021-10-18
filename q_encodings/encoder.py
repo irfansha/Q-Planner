@@ -53,19 +53,18 @@ def generate_encoding(tfunc):
     encoding = le(tfunc)
 
   # We print QCIR format directly to the file:
-  if (tfunc.parsed_instance.args.encoding_format == 1):
+  if (tfunc.parsed_instance.args.encoding_format == 'qcir'):
     encoding.print_encoding_tofile(tfunc.parsed_instance.args.encoding_out)
-  elif (tfunc.parsed_instance.args.encoding_format == 2):
+  elif (tfunc.parsed_instance.args.encoding_format == 'qdimacs'):
     # For QDIMACS, we write the encoding to an intermediate file and change
     # to right format:
     encoding.print_encoding_tofile(tfunc.parsed_instance.args.intermediate_encoding_out)
     converter_tool_path = os.path.join(tfunc.parsed_instance.args.planner_path, 'tools', 'qcir_to_dimacs_convertor' , 'qcir2qdimacs')
     # Calling the tool
     os.system(converter_tool_path + ' ' + tfunc.parsed_instance.args.intermediate_encoding_out + ' > ' + tfunc.parsed_instance.args.encoding_out)
-  # For now only dqcir is generated:
-  elif (tfunc.parsed_instance.args.encoding_format == 3):
+  elif (tfunc.parsed_instance.args.encoding_format == 'dqcir'):
     encoding.print_encoding_tofile(tfunc.parsed_instance.args.encoding_out)
-  elif (tfunc.parsed_instance.args.encoding_format == 4):
+  elif (tfunc.parsed_instance.args.encoding_format == 'dqdimacs'):
     # For dqdimacs:
     encoding.print_encoding_tofile(tfunc.parsed_instance.args.intermediate_encoding_out)
     converter_tool_path = os.path.join(tfunc.parsed_instance.args.planner_path, 'tools', 'qcir_to_dimacs_convertor' , 'qcir2qdimacs')
@@ -80,7 +79,7 @@ def generate_encoding(tfunc):
     preprocessor_path = os.path.join(tfunc.parsed_instance.args.planner_path, 'tools', 'Bloqqer', 'bloqqer')
     # Calling the tool:
     # We preprocess only qdimacs format encoding:
-    assert(tfunc.parsed_instance.args.encoding_format == 2)
+    assert(tfunc.parsed_instance.args.encoding_format == 'qdimacs')
     os.system(preprocessor_path + ' ' + tfunc.parsed_instance.args.encoding_out + ' > ' + tfunc.parsed_instance.args.preprocessed_encoding_out)
     print("Preprocessing complete")
 
@@ -89,7 +88,7 @@ def generate_encoding(tfunc):
     preprocessor_path = os.path.join(tfunc.parsed_instance.args.planner_path, 'tools', 'HQSpre', 'hqspre')
     # Calling the tool:
     # We preprocess only qdimacs format encoding:
-    assert(tfunc.parsed_instance.args.encoding_format == 2 or tfunc.parsed_instance.args.encoding_format == 4)
+    assert(tfunc.parsed_instance.args.encoding_format == 'qdimacs' or tfunc.parsed_instance.args.encoding_format == 'dqdimacs')
     os.system(preprocessor_path + ' --timeout ' +  str(tfunc.parsed_instance.args.preprocessing_time_limit) + ' -o ' + tfunc.parsed_instance.args.preprocessed_encoding_out + ' ' + tfunc.parsed_instance.args.encoding_out)
     print("Preprocessing complete")
 
@@ -97,7 +96,7 @@ def generate_encoding(tfunc):
     preprocessor_path = os.path.join(tfunc.parsed_instance.args.planner_path, 'tools', 'QRATPre+', 'qratpre+')
     # Calling the tool:
     # We preprocess only qdimacs format encoding:
-    assert(tfunc.parsed_instance.args.encoding_format == 2 or tfunc.parsed_instance.args.encoding_format == 4)
+    assert(tfunc.parsed_instance.args.encoding_format == 'qdimacs' or tfunc.parsed_instance.args.encoding_format == 'dqdimacs')
     if (tfunc.parsed_instance.args.run == 1):
       os.system(preprocessor_path + ' --print-formula ' + tfunc.parsed_instance.args.encoding_out + ' ' +  str(tfunc.parsed_instance.args.preprocessing_time_limit)  + ' > ' + tfunc.parsed_instance.args.preprocessed_encoding_out)
     else:
