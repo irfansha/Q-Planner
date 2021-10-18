@@ -40,43 +40,37 @@ if __name__ == '__main__':
                                0 = only generate encoding
                                1 = test plan existence
                                2 = extract the plan if found'''),default = 2)
-  parser.add_argument("--invariants", type=int, help=textwrap.dedent('''
-                               Four levels of invariants:
-                               0 = none
-                               1 = inner most invariants (inside forall)
-                               2 = operator invariants (outermost)
-                               3 = both inner and outer invariants, default 0'''), default = 0)
-  parser.add_argument("--invariants_out", help="output invariants file",default = 'intermediate_files/invariants')
   parser.add_argument("--val_testing", type=int, help="[0/1], default 1", default = 1)
   parser.add_argument("--encoding_format", help=textwrap.dedent('''
                                        Encoding format:
                                        [qcir/ qdimacs (default)/ dqcir/ dqdimacs'''),default = 'qdimacs')
   parser.add_argument("--encoding_out", help="output encoding file",default = 'intermediate_files/encoding')
   parser.add_argument("--intermediate_encoding_out", help="output intermediate encoding file",default = 'intermediate_files/intermediate_encoding')
-  parser.add_argument("--solver", type=int, help=textwrap.dedent('''
+  parser.add_argument("--solver", help=textwrap.dedent('''
                                        Solver:
-                                       1 = quabs
-                                       2 = CAQE (default)
-                                       3 = RaReQS
-                                       4 = pedant-solver
-                                       5 = qute'''),default = 2)
+                                       [quabs/ caqe (default)/ rareqs/ pedant/ qute]'''),default = 'caqe')
   parser.add_argument("--solver_out", help="solver output file",default = 'intermediate_files/solver_output')
   parser.add_argument("--certificate_out", help="output file for certificate (for DQBF pedant solver)",default = 'intermediate_files/certificate_output')
   parser.add_argument("--debug", type=int, help="[0/1], default 0" ,default = 0)
   parser.add_argument("--run_tests", type=int, help="[0/1], default 0",default = 0)
   parser.add_argument("--restricted_forall", type=int, help=" Additional clause to restrict forall branches [0/1/2], default 0",default = 0)
-  parser.add_argument("--preprocessing", type = int, help=textwrap.dedent('''
+  parser.add_argument("--preprocessing", help=textwrap.dedent('''
                                        Preprocessing:
-                                       0 = off
-                                       1 = bloqqer (version 37)
-                                       2 = bloqqer-qdo (version 37)
-                                       3 = hqspre
-                                       4 = qratpre+'''),default = 0)
+                                       [off (default)/ bloqqer/ bloqqer-qdo/ hqspre/ qratpre+'''),default = 'off')
   parser.add_argument("--internal_preprocessing", type=int, help="[0/1] If internal preprocessing available for a solver then enable it, default 1",default = 1)
   parser.add_argument("--preprocessed_encoding_out", help="output preprocessed encoding file",default = 'intermediate_files/preprocessed_encoding')
   parser.add_argument("--time_limit", type=float, help="Solving time limit in seconds, default 1800 seconds",default = 1800)
   parser.add_argument("--preprocessing_time_limit", type=int, help="Preprocessing time limit in seconds, default 900 seconds",default = 900)
   parser.add_argument("--qute_dependency_learning", type=int, help="[1/0] Enable/Disable dependency learning in Qute solver, default 0",default = 0)
+  parser.add_argument("--invariants", type=int, help=textwrap.dedent('''
+                               Four levels of invariants:
+                               0 = none (default)
+                               1 = inner most invariants (inside forall)
+                               2 = operator invariants (outermost)
+                               3 = both inner and outer invariants, default 0'''), default = 0)
+  parser.add_argument("--invariants_out", help="output invariants file",default = 'intermediate_files/invariants')
+
+
   args = parser.parse_args()
 
 
@@ -90,11 +84,11 @@ if __name__ == '__main__':
   print(args)
 
   if args.version:
-    print("Version 0.5")
+    print("Version 0.6")
 
   # Cannot extract a plan with simple bloqqer
   # (must use bloqqer-qdo instead):
-  if (args.preprocessing == 1 and args.run == 2 and args.solver == 2):
+  if (args.preprocessing == 1 and args.run == 2 and args.solver == 'caqe'):
     print("ERROR: extract plan with bloqqer-qdo instead of bloqqer for CAQE")
     exit()
 

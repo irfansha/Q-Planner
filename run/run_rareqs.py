@@ -53,7 +53,7 @@ class RunRareqs():
               self.sol_map[-int(var)] = 0
 
   def __init__(self, args):
-    if (args.preprocessing == 0):
+    if (args.preprocessing == 'off'):
       self.input_file_path = args.encoding_out
     else:
       self.input_file_path = args.preprocessed_encoding_out

@@ -11,20 +11,20 @@ import testing.val_testing as vt
 def run_single_solver(encoding):
   # For ease of access declaring locally:
   args = encoding.tfunc.parsed_instance.args
-  if (args.solver == 1):
+  if (args.solver == 'quabs'):
     instance = rq(args)
     sol_map = instance.sol_map
-  elif (args.solver == 2):
+  elif (args.solver == 'caqe'):
     instance = rc(args)
     sol_map = instance.sol_map
-  elif (args.solver == 3):
+  elif (args.solver == 'rareqs'):
     instance = rr(args)
     sol_map = instance.sol_map
-  elif (args.solver == 4):
+  elif (args.solver == 'pedant'):
     # Giving encoding directly for certifacte parsing:
     instance = rp(encoding)
     sol_map = instance.sol_map
-  elif (args.solver == 5):
+  elif (args.solver == 'qute'):
     instance = rq(args)
     sol_map = instance.sol_map
 

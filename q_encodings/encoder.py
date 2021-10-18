@@ -75,7 +75,7 @@ def generate_encoding(tfunc):
     print("Encoding not available yet!")
 
   # External preprocessing with bloqqer:
-  if (tfunc.parsed_instance.args.preprocessing == 1):
+  if (tfunc.parsed_instance.args.preprocessing == 'bloqqer' and tfunc.parsed_instance.args.internal_preprocessing == 0):
     preprocessor_path = os.path.join(tfunc.parsed_instance.args.planner_path, 'tools', 'Bloqqer', 'bloqqer')
     # Calling the tool:
     # We preprocess only qdimacs format encoding:
@@ -84,7 +84,7 @@ def generate_encoding(tfunc):
     print("Preprocessing complete")
 
   # If we do not enable internal preprocessing:
-  if (tfunc.parsed_instance.args.preprocessing == 3 and tfunc.parsed_instance.args.internal_preprocessing == 0):
+  if (tfunc.parsed_instance.args.preprocessing == 'hqspre' and tfunc.parsed_instance.args.internal_preprocessing == 0):
     preprocessor_path = os.path.join(tfunc.parsed_instance.args.planner_path, 'tools', 'HQSpre', 'hqspre')
     # Calling the tool:
     # We preprocess only qdimacs format encoding:
@@ -92,7 +92,7 @@ def generate_encoding(tfunc):
     os.system(preprocessor_path + ' --timeout ' +  str(tfunc.parsed_instance.args.preprocessing_time_limit) + ' -o ' + tfunc.parsed_instance.args.preprocessed_encoding_out + ' ' + tfunc.parsed_instance.args.encoding_out)
     print("Preprocessing complete")
 
-  if (tfunc.parsed_instance.args.preprocessing == 4):
+  if (tfunc.parsed_instance.args.preprocessing == 'qratpre+'):
     preprocessor_path = os.path.join(tfunc.parsed_instance.args.planner_path, 'tools', 'QRATPre+', 'qratpre+')
     # Calling the tool:
     # We preprocess only qdimacs format encoding:

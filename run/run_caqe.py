@@ -6,9 +6,9 @@ import os
 class RunCaqe():
 
   def run_caqe(self):
-    if (self.internal_preprocessing == 1 and self.preprocessing == 2):
+    if (self.internal_preprocessing == 1 and self.preprocessing == 'bloqqer-qdo'):
       command = self.solver_path + " --preprocessor=bloqqer --qdo " + self.input_file_path + " > " + self.output_file_path
-    elif (self.internal_preprocessing == 1 and self.preprocessing == 3):
+    elif (self.internal_preprocessing == 1 and self.preprocessing == 'hqspre'):
       command = self.solver_path + " --preprocessor=hqspre --qdo " + self.input_file_path + " > " + self.output_file_path
     else:
       command = self.solver_path + " --qdo " + self.input_file_path + " > " + self.output_file_path
