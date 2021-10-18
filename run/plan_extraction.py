@@ -3,7 +3,12 @@
 class ExtractPlan():
 
   def extract_plan(self, encoding):
-    for i in range(encoding.tfunc.parsed_instance.args.plan_length):
+    # We need to extract plan for plan length not make span:
+    if (encoding.tfunc.parsed_instance.args.e == 'rs-UE'):
+      plan_length = encoding.plan_length
+    else:
+      plan_length = encoding.tfunc.parsed_instance.args.plan_length
+    for i in range(plan_length):
       # Extracting action name:
       action_name_string = ''
       for variable in encoding.action_variables[i]:

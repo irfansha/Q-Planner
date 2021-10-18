@@ -33,6 +33,7 @@ if __name__ == '__main__':
   parser.add_argument("-e", help=textwrap.dedent('''
                                   encoding types:
                                   s-UE = Simple Ungrounded Encoding (default)
+                                  rs-UE = Simple Ungrounded Encoding with reused parameter variables
                                   sc-UE = Strongly Constrained Ungrounded Encoding
                                   l-UE = Logarithmic Ungrounded Encoding (DQBF)'''),default = 's-UE')
   parser.add_argument("--run", type=int, help=textwrap.dedent('''
@@ -88,16 +89,16 @@ if __name__ == '__main__':
 
   # Cannot extract a plan with simple bloqqer
   # (must use bloqqer-qdo instead):
-  if (args.preprocessing == 1 and args.run == 2 and args.solver == 'caqe'):
+  if (args.preprocessing == 'bloqqer' and args.run == 2 and args.solver == 'caqe'):
     print("ERROR: extract plan with bloqqer-qdo instead of bloqqer for CAQE")
     exit()
 
   # Cannot extract a plan with simple bloqqer (only plan existence available):
-  if (args.preprocessing == 1 and args.run == 2):
+  if (args.preprocessing == 'bloqqer' and args.run == 2):
     print("Warning: cannot extract plan with bloqqer, only plan existence")
     #exit()
 
-  if (args.preprocessing == 3 and args.run == 2):
+  if (args.preprocessing == 'hqspre' and args.run == 2):
     print("Warning: cannot extract plan with HQSpre, only plan existence")
     #exit()
 
@@ -116,7 +117,7 @@ if __name__ == '__main__':
 
   # Instead of action specific constraints,
   # predicate specific constraints are generated:
-  if (args.e == 's-UE' or args.e == 'l-UE'):
+  if (args.e == 's-UE' or args.e == 'rs-UE' or args.e == 'l-UE'):
     parsed_instance.generate_predicate_constraints()
     # Generating simple transition function:
     tfunc = stf(parsed_instance)

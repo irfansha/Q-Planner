@@ -55,8 +55,8 @@ class RunCaqe():
             self.sol_map[-int(literal)] = 0
 
   def __init__(self, args):
-    # If internal preprocessing is turned off:
-    if (args.internal_preprocessing == 0):
+    # If internal preprocessing is turned off but preprocessing is applied:
+    if (args.internal_preprocessing == 0 and args.preprocessing != 'off'):
       self.input_file_path = args.preprocessed_encoding_out
     else:
       self.input_file_path = args.encoding_out

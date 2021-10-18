@@ -1,6 +1,7 @@
 # Irfansha Shaik, 10.04.2021, Aarhus.
 
 from q_encodings.simple_encoding import SimpleEncoding as se
+from q_encodings.reused_simple_encoding import ReusedSimpleEncoding as rse
 from q_encodings.strongly_constrained_encoding import StronglyConstrainedEncoding as sce
 from q_encodings.log_encoding import LogEncoding as le
 import os
@@ -45,6 +46,9 @@ def generate_encoding(tfunc):
   if (tfunc.parsed_instance.args.e == 's-UE'):
     print("Generating simple ungrounded encoding")
     encoding = se(tfunc)
+  elif (tfunc.parsed_instance.args.e == 'rs-UE'):
+    print("Generating simple ungrounded encoding with reused parameter variables")
+    encoding = rse(tfunc)
   elif (tfunc.parsed_instance.args.e == 'sc-UE'):
     print("Generating strongly constrained ungrounded encoding")
     encoding = sce(tfunc)
