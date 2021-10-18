@@ -61,7 +61,8 @@ if __name__ == '__main__':
                                        1 = quabs
                                        2 = CAQE (default)
                                        3 = RaReQS
-                                       4 = pedant-solver'''),default = 2)
+                                       4 = pedant-solver
+                                       5 = qute'''),default = 2)
   parser.add_argument("--solver_out", help="solver output file",default = 'intermediate_files/solver_output')
   parser.add_argument("--certificate_out", help="output file for certificate (for DQBF pedant solver)",default = 'intermediate_files/certificate_output')
   parser.add_argument("--debug", type=int, help="[0/1], default 0" ,default = 0)
@@ -74,9 +75,11 @@ if __name__ == '__main__':
                                        2 = bloqqer-qdo (version 37)
                                        3 = hqspre
                                        4 = qratpre+'''),default = 0)
+  parser.add_argument("--internal_preprocessing", type=int, help="[0/1] If internal preprocessing available for a solver then enable it, default 1",default = 1)
   parser.add_argument("--preprocessed_encoding_out", help="output preprocessed encoding file",default = 'intermediate_files/preprocessed_encoding')
   parser.add_argument("--time_limit", type=float, help="Solving time limit in seconds, default 1800 seconds",default = 1800)
   parser.add_argument("--preprocessing_time_limit", type=int, help="Preprocessing time limit in seconds, default 900 seconds",default = 900)
+  parser.add_argument("--qute_dependency_learning", type=int, help="[1/0] Enable/Disable dependency learning in Qute solver, default 0",default = 0)
   args = parser.parse_args()
 
 

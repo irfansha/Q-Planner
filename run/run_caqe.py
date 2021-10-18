@@ -6,9 +6,9 @@ import os
 class RunCaqe():
 
   def run_caqe(self):
-    if (self.preprocessing == 2):
+    if (self.internal_preprocessing == 1 and self.preprocessing == 2):
       command = self.solver_path + " --preprocessor=bloqqer --qdo " + self.input_file_path + " > " + self.output_file_path
-    elif (self.preprocessing == 3):
+    elif (self.internal_preprocessing == 1 and self.preprocessing == 3):
       command = self.solver_path + " --preprocessor=hqspre --qdo " + self.input_file_path + " > " + self.output_file_path
     else:
       command = self.solver_path + " --qdo " + self.input_file_path + " > " + self.output_file_path
@@ -55,14 +55,15 @@ class RunCaqe():
             self.sol_map[-int(literal)] = 0
 
   def __init__(self, args):
-    # If qratpre+ preprocessor is used:
-    if (args.preprocessing == 4):
+    # If internal preprocessing is turned off:
+    if (args.internal_preprocessing == 0):
       self.input_file_path = args.preprocessed_encoding_out
     else:
       self.input_file_path = args.encoding_out
     self.output_file_path = args.solver_out
     self.time_limit = args.time_limit
     self.preprocessing = args.preprocessing
+    self.internal_preprocessing = args.internal_preprocessing
     # By default timeout not occured yet:
     self.timed_out = False
     self.solver_path = os.path.join(args.planner_path, 'solvers', 'caqe', 'caqe')
