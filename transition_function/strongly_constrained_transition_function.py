@@ -3,6 +3,8 @@
 from constraints.problem_structure import ProblemInfo as pinfo
 from utils.variables_dispatcher import VarDispatcher as vd
 from utils.gates import GatesGen as gg
+import utils.lessthen_cir as lsc
+import math
 
 # TODO: update to add the strong constraints
 
@@ -245,37 +247,18 @@ class StronglyConstrainedTransitionFunction:
       # Add seperator in encoding for better redability:
       self.transition_gates.append(["# ------------------------------------------------------------------------"])
 
-    invalid_action_gates = []
-    # Generating negative constraints for impossible actions, ignore noop action:
-    self.transition_gates.append(['# Invalid action gates: '])
-    for i in range(self.probleminfo.num_valid_actions + 1, self.probleminfo.num_possible_actions):
-      cur_invalid_action_vars_list = self.generate_binary_format(self.action_vars, i)
-      self.gates_generator.and_gate(cur_invalid_action_vars_list)
-      invalid_action_gates.append(self.gates_generator.output_gate)
+    # Generating log lessthan circuit for invalid actions:
+    if (not math.log2(self.probleminfo.num_valid_actions+1).is_integer()):
+      self.transition_gates.append(['# Invalid action gates: '])
+      lsc.add_circuit(self.gates_generator, self.action_vars, self.probleminfo.num_valid_actions + 1)
+      predicate_final_gates.append(self.gates_generator.output_gate)
 
-    # Or gate to check if any one of them is true:
-    if (len(invalid_action_gates) != 0):
-      self.gates_generator.or_gate(invalid_action_gates)
-      self.invalid_actions_final_gate = self.gates_generator.output_gate
-      # Adding negative of invalid or gates:
-      predicate_final_gates.append(-self.invalid_actions_final_gate)
-
-    invalid_parameter_gates = []
-    # Generating negative constraints for impossible parameter values:
-    self.transition_gates.append(['# Invalid parameter gates: '])
-    for parameter_vars in self.parameter_variable_list:
-      for i in range(self.probleminfo.num_objects, self.probleminfo.num_possible_parameter_values):
-        cur_invalid_parameter_vars_list = self.generate_binary_format(parameter_vars, i)
-        self.gates_generator.and_gate(cur_invalid_parameter_vars_list)
-        invalid_parameter_gates.append(self.gates_generator.output_gate)
-
-    # Or gate to check if any one of them is true:
-    if (len(invalid_parameter_gates) != 0):
-      self.gates_generator.or_gate(invalid_parameter_gates)
-      self.invalid_parameters_final_gate = self.gates_generator.output_gate
-      # Adding negative of invalid or gates:
-      predicate_final_gates.append(-self.invalid_parameters_final_gate)
-
+    # Generating log lessthan circuit for invalid parameters:
+    if (not math.log2(self.probleminfo.num_objects).is_integer()):
+      self.transition_gates.append(['# Invalid parameter gates: '])
+      for parameter_vars in self.parameter_variable_list:
+        lsc.add_circuit(self.gates_generator, parameter_vars, self.probleminfo.num_objects)
+        predicate_final_gates.append(self.gates_generator.output_gate)
 
     equality_output_gates = []
     # TODO: testing needed
