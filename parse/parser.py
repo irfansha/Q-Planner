@@ -35,6 +35,8 @@ class Parse:
     # debugging to be done here in case something goes wrong:
     self.generate_valid_types()
     self.generate_valid_actions()
+    self.generate_type_bounds()
+
 
     # Asserting no functions present:
     assert(len(self.lang.functions) == 0)
@@ -111,6 +113,81 @@ class Parse:
       print("VALID ACTIONS: ", self.valid_actions)
       print("Num of valid actions: ", len(self.valid_actions))
       print("#------------------------------------------------------------------------\n")
+
+  # First sorts the objects list based on types i.e., groups them based on object type and type with less objects goes front,
+  # then finds the bounds for each type (including compound types):
+  def generate_type_bounds(self):
+    base_types = []
+    for obj in self.lang.constants():
+      if (obj.sort.name not in base_types):
+        #print(list(self.lang.get(obj.sort.name).domain()))
+        base_types.append(obj.sort.name)
+    #print(base_types)
+    #print(self.lang.constants())
+    # Sorting by number of objects present in the type:
+    base_types.sort(key = lambda x:len(list(self.lang.get(x).domain())))
+    #print(base_types)
+
+    self.new_objects_list = []
+    self.type_bounds = {}
+    # we use index for indicating bounds for each base type:
+    start_index = 0
+    # Generating new objects list that is sorted based on base types:
+    for single_base_type in base_types:
+      cur_type_objects = list(self.lang.get(single_base_type).domain())
+      self.new_objects_list.extend(cur_type_objects)
+      # Base types only have single bound but adding inside list for generality:
+      self.type_bounds[single_base_type] = [[start_index, len(cur_type_objects)-1 + start_index]]
+      start_index = len(cur_type_objects) + start_index
+      # The new index must be the same as the length of the current new object list:
+      assert(start_index == len(self.new_objects_list))
+
+    #print(len(self.new_objects_list))
+    #print(self.type_bounds)
+    # Finding base types for each compound type:
+    for type in self.valid_types:
+      if (type.name not in base_types):
+        # First adding empty list for current type:
+        self.type_bounds[type.name] = []
+        cur_type_objects = list(self.lang.get(type.name).domain())
+        #print(type.name, cur_type_objects)
+        # If type is super types i.e., all the objects are this type then we ignore:
+        if len(list(cur_type_objects)) == len(self.new_objects_list):
+          continue
+        # Now we loop through the objects of this types to find the sub-base type bounds:
+        for obj in cur_type_objects:
+          # Base types only have on type:
+          sub_type_bound = self.type_bounds[obj.sort.name][0]
+          if (sub_type_bound not in self.type_bounds[type.name]):
+            self.type_bounds[type.name].append(sub_type_bound)
+          #print(obj.name, obj.sort.name, sub_type_bound)
+
+    #print(self.type_bounds)
+
+    # Sorting the bounds in type bounds, this way it is possible to combine adjacent intervals:
+    for cur_type,cur_bounds in self.type_bounds.items():
+      cur_bounds.sort(key = lambda x:int(x[0]))
+
+    for cur_type, cur_bounds in self.type_bounds.items():
+      # We only look at the compound types:
+      if (len(cur_bounds) < 2):
+        continue
+      new_consolidated_bounds = []
+
+      prev_bound = cur_bounds[0]
+      for bound in cur_bounds[1:]:
+        if prev_bound[1] + 1 == bound[0]:
+          prev_bound = [prev_bound[0], bound[1]]
+        else:
+          # If the current bound is not a continution then we add it to the consodidated bounds:
+          new_consolidated_bounds.append(prev_bound)
+          # The current bound will then become the previous bound for the next round:
+          prev_bound = bound
+      # Last bound must be added to the consolidated bounds:
+      new_consolidated_bounds.append(prev_bound)
+      self.type_bounds[cur_type] = list(new_consolidated_bounds)
+
+    #print(self.type_bounds)
 
 
   # Helper function to get the parameter symbols of
