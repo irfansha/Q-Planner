@@ -253,12 +253,14 @@ class StronglyConstrainedTransitionFunction:
       lsc.add_circuit(self.gates_generator, self.action_vars, self.probleminfo.num_valid_actions + 1)
       predicate_final_gates.append(self.gates_generator.output_gate)
 
+    '''
     # Generating log lessthan circuit for invalid parameters:
     if (not math.log2(self.probleminfo.num_objects).is_integer()):
       self.transition_gates.append(['# Invalid parameter gates: '])
       for parameter_vars in self.parameter_variable_list:
         lsc.add_circuit(self.gates_generator, parameter_vars, self.probleminfo.num_objects)
         predicate_final_gates.append(self.gates_generator.output_gate)
+    '''
 
     equality_output_gates = []
     # TODO: testing needed
