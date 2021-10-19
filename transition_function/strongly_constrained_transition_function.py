@@ -328,6 +328,7 @@ class StronglyConstrainedTransitionFunction:
       single_action_parameter_type_output_gates = []
       for parameter in action.parameters:
         type_name = parameter.sort.name
+        #print(type_name, self.parsed_instance.type_bounds[type_name])
         cur_objects = list(self.parsed_instance.lang.get(type_name).domain())
         # If all object are of this type, no constraint needed:
         if (len(cur_objects) == num_objects):
@@ -344,12 +345,7 @@ class StronglyConstrainedTransitionFunction:
         self.transition_gates.append(['# OR gate for single type' + str(type_name)])
         self.gates_generator.or_gate(single_type_output_gates)
         single_action_parameter_type_output_gates.append(self.gates_generator.output_gate)
-      # We explicitly say the rest of the undefined parameter are zeros:
-      for i in range(len(action.parameters), self.probleminfo.max_action_parameters):
-        self.transition_gates.append(['# undefined parameters forced to zero:'])
-        formatted_zero_parameters = self.generate_binary_format(self.parameter_variable_list[i], 0)
-        self.gates_generator.and_gate(formatted_zero_parameters)
-        single_action_parameter_type_output_gates.append(self.gates_generator.output_gate)
+
       # Making an and gate for all parameter gates:
       self.transition_gates.append(['# And gate for single action parameters:'])
       self.gates_generator.and_gate(single_action_parameter_type_output_gates)
@@ -361,24 +357,6 @@ class StronglyConstrainedTransitionFunction:
       self.gates_generator.if_then_gate(if_gate, parameters_output_gate)
       # Appending to the predicate final gates:
       predicate_final_gates.append(self.gates_generator.output_gate)
-
-    # Noop constraints:
-    noop_formatted_action_vars = self.generate_binary_format(self.action_vars, self.probleminfo.num_valid_actions)
-    self.transition_gates.append(['# constraining noop action:'])
-    self.gates_generator.and_gate(noop_formatted_action_vars)
-    if_noop_gate = self.gates_generator.output_gate
-    noop_action_parameter_output_gates = []
-    # setting all parameters to zero:
-    for i in range(self.probleminfo.max_action_parameters):
-      self.transition_gates.append(['# undefined parameters forced to zero:'])
-      formatted_zero_parameters = self.generate_binary_format(self.parameter_variable_list[i], 0)
-      self.gates_generator.and_gate(formatted_zero_parameters)
-      noop_action_parameter_output_gates.append(self.gates_generator.output_gate)
-    self.gates_generator.and_gate(noop_action_parameter_output_gates)
-    noop_action_then_gate = self.gates_generator.output_gate
-    self.transition_gates.append(['# if then gate for noop action to parameters:'])
-    self.gates_generator.if_then_gate(if_noop_gate, noop_action_then_gate)
-    predicate_final_gates.append(self.gates_generator.output_gate)
 
     self.transition_gates.append(["# ------------------------------------------------------------------------"])
 
