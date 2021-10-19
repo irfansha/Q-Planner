@@ -328,23 +328,40 @@ class StronglyConstrainedTransitionFunction:
       single_action_parameter_type_output_gates = []
       for parameter in action.parameters:
         type_name = parameter.sort.name
-        #print(type_name, self.parsed_instance.type_bounds[type_name])
-        cur_objects = list(self.parsed_instance.lang.get(type_name).domain())
-        # If all object are of this type, no constraint needed:
-        if (len(cur_objects) == num_objects):
+        bounds_list = self.parsed_instance.type_bounds[type_name]
+        bound_output_gates = []
+
+        # If it is a super type i.e., with all objects we simply ignore:
+        if (len(bounds_list) == 1 and len(bounds_list[0]) == 0):
           continue
-        # For each current obj we make a gate:
-        # We need to make and of or gates:
-        single_type_output_gates = []
-        for obj in cur_objects:
-          # Finding object position:
-          object_index = self.probleminfo.object_names.index(obj.name)
-          formatted_obj_variables = self.generate_binary_format(self.variables_map[(action_name, parameter.symbol)], object_index)
-          self.gates_generator.and_gate(formatted_obj_variables)
-          single_type_output_gates.append(self.gates_generator.output_gate)
-        self.transition_gates.append(['# OR gate for single type' + str(type_name)])
-        self.gates_generator.or_gate(single_type_output_gates)
-        single_action_parameter_type_output_gates.append(self.gates_generator.output_gate)
+        self.transition_gates.append(['# Bound constraint for parameter: ' +  str(parameter)])
+        # For each bound we generate clauses now:
+        for bound in bounds_list:
+          # If only one element is present, then single 'and' gate is sufficient:
+          if (bound[0] == bound[1]):
+            formatted_obj_variables = self.generate_binary_format(self.variables_map[(action_name, parameter.symbol)], bound[0])
+            self.gates_generator.and_gate(formatted_obj_variables)
+            bound_output_gates.append(self.gates_generator.output_gate)
+          else:
+            # lower bound (not) less than constraint:
+            lsc.add_circuit(self.gates_generator, self.variables_map[(action_name, parameter.symbol)], bound[0])
+            lower_output_gate = self.gates_generator.output_gate
+
+            # Upper bound less than constraint,
+            # here if the upper bound + 1 is equal to number of objects and powers of two, then we ignore:
+            if (bound[1] + 1 == self.probleminfo.num_objects and math.log2(self.probleminfo.num_objects).is_integer()):
+              upper_output_gate = -1
+            else:
+              lsc.add_circuit(self.gates_generator, self.variables_map[(action_name, parameter.symbol)], bound[1] + 1)
+              upper_output_gate = self.gates_generator.output_gate
+
+            # If both bounds are valid:
+            if (upper_output_gate != -1):
+              self.gates_generator.and_gate([-lower_output_gate, upper_output_gate])
+              single_action_parameter_type_output_gates.append(self.gates_generator.output_gate)
+            else:
+              single_action_parameter_type_output_gates.append(-lower_output_gate)
+
 
       # Making an and gate for all parameter gates:
       self.transition_gates.append(['# And gate for single action parameters:'])
