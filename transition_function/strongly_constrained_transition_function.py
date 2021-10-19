@@ -341,7 +341,9 @@ class StronglyConstrainedTransitionFunction:
           if (bound[0] == bound[1]):
             formatted_obj_variables = self.generate_binary_format(self.variables_map[(action_name, parameter.symbol)], bound[0])
             self.gates_generator.and_gate(formatted_obj_variables)
-            bound_output_gates.append(self.gates_generator.output_gate)
+            # only one is needed:
+            lower_output_gate = self.gates_generator.output_gate
+            upper_output_gate = -1
           else:
             # lower bound (not) less than constraint:
             lsc.add_circuit(self.gates_generator, self.variables_map[(action_name, parameter.symbol)], bound[0])
