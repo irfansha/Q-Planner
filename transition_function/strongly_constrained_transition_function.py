@@ -342,8 +342,7 @@ class StronglyConstrainedTransitionFunction:
             formatted_obj_variables = self.generate_binary_format(self.variables_map[(action_name, parameter.symbol)], bound[0])
             self.gates_generator.and_gate(formatted_obj_variables)
             # only one is needed:
-            lower_output_gate = self.gates_generator.output_gate
-            upper_output_gate = -1
+            single_action_parameter_type_output_gates.append(self.gates_generator.output_gate)
           else:
             # lower bound (not) less than constraint:
             lsc.add_circuit(self.gates_generator, self.variables_map[(action_name, parameter.symbol)], bound[0])
