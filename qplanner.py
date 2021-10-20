@@ -46,6 +46,7 @@ if __name__ == '__main__':
                                        Encoding format:
                                        [qcir/ qdimacs (default)/ dqcir/ dqdimacs'''),default = 'qdimacs')
   parser.add_argument("--encoding_out", help="output encoding file",default = 'intermediate_files/encoding')
+  parser.add_argument("--ignore_noop", type=int, help="[0/1] for optimal plans we can ignore noop action, default 0", default = 0)
   parser.add_argument("--intermediate_encoding_out", help="output intermediate encoding file",default = 'intermediate_files/intermediate_encoding')
   parser.add_argument("--solver", help=textwrap.dedent('''
                                        Solver:
