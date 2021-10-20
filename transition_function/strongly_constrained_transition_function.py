@@ -336,20 +336,22 @@ class StronglyConstrainedTransitionFunction:
       for parameter in action.parameters:
         type_name = parameter.sort.name
         bounds_list = self.parsed_instance.type_bounds[type_name]
-        bound_output_gates = []
 
         # If it is a super type i.e., with all objects we simply ignore:
-        if (len(bounds_list) == 1 and len(bounds_list[0]) == 0):
+        if (len(bounds_list) == 0 ):
           continue
         self.transition_gates.append(['# Bound constraint for parameter: ' +  str(parameter)])
+        single_step_bound_output_gates = []
         # For each bound we generate clauses now:
         for bound in bounds_list:
+          self.transition_gates.append(['# Bound : ' +  str(bound[0]) + ',' +str(bound[1])])
           # If only one element is present, then single 'and' gate is sufficient:
           if (bound[0] == bound[1]):
             formatted_obj_variables = self.generate_binary_format(self.variables_map[(action_name, parameter.symbol)], bound[0])
             self.gates_generator.and_gate(formatted_obj_variables)
             # only one is needed:
-            single_action_parameter_type_output_gates.append(self.gates_generator.output_gate)
+            single_step_bound_output_gates.append(self.gates_generator.output_gate)
+            #single_action_parameter_type_output_gates.append(self.gates_generator.output_gate)
           else:
             # lower bound (not) less than constraint:
             lsc.add_circuit(self.gates_generator, self.variables_map[(action_name, parameter.symbol)], bound[0])
@@ -366,9 +368,20 @@ class StronglyConstrainedTransitionFunction:
             # If both bounds are valid:
             if (upper_output_gate != -1):
               self.gates_generator.and_gate([-lower_output_gate, upper_output_gate])
-              single_action_parameter_type_output_gates.append(self.gates_generator.output_gate)
+              single_step_bound_output_gates.append(self.gates_generator.output_gate)
+              #single_action_parameter_type_output_gates.append(self.gates_generator.output_gate)
             else:
-              single_action_parameter_type_output_gates.append(-lower_output_gate)
+              single_step_bound_output_gates.append(-lower_output_gate)
+              #single_action_parameter_type_output_gates.append(-lower_output_gate)
+
+        # Now we have a disjunction of separate bound output gates:
+        assert(len(single_step_bound_output_gates) != 0)
+        # no need for or gate if only one output gate:
+        if (len(single_step_bound_output_gates) == 1):
+          single_action_parameter_type_output_gates.extend(single_step_bound_output_gates)
+        else:
+          self.gates_generator.or_gate(single_step_bound_output_gates)
+          single_action_parameter_type_output_gates.append(self.gates_generator.output_gate)
 
       # Making an and gate for all parameter gates:
       self.transition_gates.append(['# And gate for single action parameters:'])
