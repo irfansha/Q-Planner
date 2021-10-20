@@ -209,10 +209,11 @@ class SimpleTransitionFunction:
     # If we are ignoring noop, the extra action is also invalid:
     if (self.parsed_instance.args.ignore_noop == 1):
       lsc.add_circuit(self.gates_generator, self.action_vars, self.probleminfo.num_valid_actions)
+      predicate_final_gates.append(self.gates_generator.output_gate)
     # Only when the extra action is non-powers of two we generate the less than constraint:
     elif(not math.log2(self.probleminfo.num_valid_actions+1).is_integer()):
       lsc.add_circuit(self.gates_generator, self.action_vars, self.probleminfo.num_valid_actions + 1)
-    predicate_final_gates.append(self.gates_generator.output_gate)
+      predicate_final_gates.append(self.gates_generator.output_gate)
 
     # Generating log lessthan circuit for invalid parameters:
     if (not math.log2(self.probleminfo.num_objects).is_integer()):
