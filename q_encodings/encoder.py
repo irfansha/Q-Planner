@@ -96,7 +96,7 @@ def generate_encoding(tfunc):
     os.system(preprocessor_path + ' --timeout ' +  str(tfunc.parsed_instance.args.preprocessing_time_limit) + ' -o ' + tfunc.parsed_instance.args.preprocessed_encoding_out + ' ' + tfunc.parsed_instance.args.encoding_out)
     print("Preprocessing complete")
 
-  if (tfunc.parsed_instance.args.preprocessing == 'qratpre+'):
+  if (tfunc.parsed_instance.args.preprocessing == 'qratpre+' or tfunc.parsed_instance.args.preprocessing == 'q+b' or tfunc.parsed_instance.args.preprocessing == 'q+h'):
     preprocessor_path = os.path.join(tfunc.parsed_instance.args.planner_path, 'tools', 'QRATPre+', 'qratpre+')
     # Calling the tool:
     # We preprocess only qdimacs format encoding:

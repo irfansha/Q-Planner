@@ -58,8 +58,17 @@ if __name__ == '__main__':
   parser.add_argument("--restricted_forall", type=int, help=" Additional clause to restrict forall branches [0/1/2], default 0",default = 0)
   parser.add_argument("--preprocessing", help=textwrap.dedent('''
                                        Preprocessing:
-                                       [off (default)/ bloqqer/ bloqqer-qdo/ hqspre/ qratpre+'''),default = 'off')
-  parser.add_argument("--internal_preprocessing", type=int, help="[0/1] If internal preprocessing available for a solver then enable it, default 1",default = 1)
+                                        off (default)
+                                        bloqqer
+                                        bloqqer-qdo
+                                        hqspre
+                                        qratpre+
+                                        q+b (qratpre+ and bloqqer-qdo , only for caqe as of now)
+                                        q+h (qratre+ and hqspre, only for caqe as of now)'''),default = 'off')
+  parser.add_argument("--internal_preprocessing", type=int, help=textwrap.dedent('''
+                                0 - Disable
+                                1 - If internal preprocessing available for a solver then enable it (default)
+                                2 - using both qratpre+ and an internal preprocessor'''),default = 1)
   parser.add_argument("--preprocessed_encoding_out", help="output preprocessed encoding file",default = 'intermediate_files/preprocessed_encoding')
   parser.add_argument("--time_limit", type=float, help="Solving time limit in seconds, default 1800 seconds",default = 1800)
   parser.add_argument("--preprocessing_time_limit", type=int, help="Preprocessing time limit in seconds, default 900 seconds",default = 900)

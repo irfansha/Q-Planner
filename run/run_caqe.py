@@ -6,9 +6,9 @@ import os
 class RunCaqe():
 
   def run_caqe(self):
-    if (self.internal_preprocessing == 1 and self.preprocessing == 'bloqqer-qdo'):
+    if (self.internal_preprocessing != 0 and (self.preprocessing == 'bloqqer-qdo' or self.preprocessing == 'q+b')):
       command = self.solver_path + " --preprocessor=bloqqer --qdo " + self.input_file_path + " > " + self.output_file_path
-    elif (self.internal_preprocessing == 1 and self.preprocessing == 'hqspre'):
+    elif (self.internal_preprocessing != 0 and (self.preprocessing == 'hqspre' or self.preprocessing == 'q+h')):
       command = self.solver_path + " --preprocessor=hqspre --qdo " + self.input_file_path + " > " + self.output_file_path
     else:
       command = self.solver_path + " --qdo " + self.input_file_path + " > " + self.output_file_path
@@ -56,8 +56,9 @@ class RunCaqe():
 
   def __init__(self, args):
     # If internal preprocessing is turned off but preprocessing is applied:
-    if (args.internal_preprocessing == 0 and args.preprocessing != 'off'):
+    if (args.internal_preprocessing != 1 and args.preprocessing != 'off'):
       self.input_file_path = args.preprocessed_encoding_out
+      print("it is here")
     else:
       self.input_file_path = args.encoding_out
     self.output_file_path = args.solver_out
