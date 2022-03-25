@@ -1,10 +1,11 @@
 # Irfansha Shaik, 10.04.2021, Aarhus.
 
-from utils.variables_dispatcher import VarDispatcher as vd
-from utils.gates import GatesGen as gg
-from tarski.syntax import formulas as fr
 import math
+
 import utils.lessthen_cir as lsc
+from tarski.syntax import formulas as fr
+from utils.gates import GatesGen as gg
+from utils.variables_dispatcher import VarDispatcher as vd
 
 '''
 WARNING: It is possible that empty or gates might cause some problem,
@@ -21,6 +22,8 @@ class SimpleEncoding:
 
   def print_encoding_tofile(self, file_path):
     f = open(file_path, 'w')
+    # Writing the standard label for qcir and maximum value of the gates:
+    f.write('#QCIR-G14 ' + str(self.final_output_gate) + '\n')
     for gate in self.quantifier_block:
       self.print_gate_tofile(gate, f)
     f.write('output(' + str(self.final_output_gate) + ')\n')
